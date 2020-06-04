@@ -4,6 +4,9 @@
     <input type="text" name="username" v-model="input.username" placeholder="Username" />
     <input type="password" name="password" v-model="input.password" placeholder="Password" />
     <button type="button" v-on:click="login()">Login</button>
+    <p>
+    <label>{{ input.error }}</label>
+    </p>
   </div>
 </template>
 
@@ -14,25 +17,32 @@ export default {
     return {
       input: {
         username: '',
-        password: ''
+        password: '',
+        error: ''
       }
     }
   },
+  http: {
+    root: 'http://0.0.0.0:8080'
+  },
   methods: {
     login () {
-      if (this.input.username !== '' && this.input.password !== '') {
-        if (
-          this.input.username === this.$parent.mockAccount.username &&
-          this.input.password === this.$parent.mockAccount.password
-        ) {
-          this.$emit('authenticated', true)
-          this.$router.replace({ name: 'stats' })
-        } else {
-          console.log('The username and / or password is incorrect')
-        }
-      } else {
-        console.log('A username and password must be present')
-      }
+      this.input.error = 'Login...'
+      var formData = new FormData()
+      formData.append('userId', this.input.username)
+      formData.append('password', this.input.password)
+      this.$http.post('https://gentle-inlet-02091.herokuapp.com/login', formData)
+        .then(response => {
+          if (response.body === 'Logged') {
+            this.$emit('authenticated', true)
+            this.$router.replace({ name: 'stats' })
+            this.input.error = 'ok'
+          } else {
+            this.input.error = 'The username and / or password is incorrect'
+          }
+        }, response => {
+          this.input.error = 'The username and / or password is incorrect'
+        })
     }
   }
 }

@@ -1,4 +1,4 @@
-# asynchronous_simple_stats
+# Asynchronous Simple Stats front end
 
 > A Vue.js project
 
@@ -28,3 +28,7 @@ npm test
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Editor
+
+[Visual Studio Code](https://code.visualstudio.com)
