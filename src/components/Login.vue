@@ -22,16 +22,13 @@ export default {
       }
     }
   },
-  http: {
-    root: 'http://0.0.0.0:8080'
-  },
   methods: {
     login () {
       this.input.error = 'Login...'
       var formData = new FormData()
       formData.append('userId', this.input.username)
       formData.append('password', this.input.password)
-      this.$http.post('https://gentle-inlet-02091.herokuapp.com/login', formData)
+      this.$http.post(this.$parent.backEndUrl + '/login', formData)
         .then(response => {
           if (response.body === 'Logged') {
             this.$emit('authenticated', true)

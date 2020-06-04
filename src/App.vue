@@ -13,10 +13,7 @@ export default {
   data () {
     return {
       authenticated: false,
-      mockAccount: {
-        username: 'bot',
-        password: 'pass'
-      }
+      backEndUrl: 'https://gentle-inlet-02091.herokuapp.com'
     }
   },
   mounted () {
@@ -29,7 +26,10 @@ export default {
       this.authenticated = status
     },
     logout () {
-      this.authenticated = false
+      this.$http.get(this.backEndUrl + '/logout')
+        .then(response => {
+          this.authenticated = false
+        })
     }
   }
 }
