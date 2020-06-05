@@ -2,9 +2,6 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Stats from '@/components/Stats'
 import Login from '@/components/login'
-
-const BASE_URL = 'https://gentle-inlet-02091.herokuapp.com'
-
 Vue.use(Router)
 
 export default new Router({
