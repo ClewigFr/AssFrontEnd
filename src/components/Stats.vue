@@ -4,11 +4,16 @@
     <label>Editer status : <input type="text" v-model="msg.title"/></label>
     <h2>Content</h2>
     <label>{{ msg.content }}</label>
-    <div id="chart"></div>
-    <h2>Json</h2>
+    <h2>Pages</h2>
+    <div id="chartPagesHits"></div>
+    <h2>Sessions</h2>
+    <label>Total : {{ uniqueSessions.length }}</label>
+    <br/>
+    <label>Pages / session : {{ averagePages }}</label>
+    <!-- <h2>Json</h2>
     <ul v-for="stat in stats2" :key="stat.page">
       <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
-    </ul>
+    </ul> -->
   </div>
 </template>
 
@@ -33,7 +38,9 @@ export default {
         timestamp: 0,
         pageName: 'pouet'
       }],
-      stats2: []
+      stats2: [],
+      uniqueSessions: [],
+      averagePages: 0
     }
   },
   http: {
@@ -49,19 +56,39 @@ export default {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
         this.stats2 = json.stats
-        this.drawChart()
+        this.drawChartPagesHits()
+        this.drawChartSession()
       }, response => {
         this.msg.content = 'erreur'
       })
   },
   methods: {
-    drawChart () {
+    drawChartSession () {
+      this.uniqueSessions = []
+      this.stats2.forEach(item => {
+        if (!this.uniqueSessions.some(rec => {
+          return item.sessionId === rec
+        })) {
+          this.uniqueSessions.push(item.sessionId)
+        }
+      })
+      var uniqueSessionsCounts = []
+      this.uniqueSessions.forEach(session => {
+        var sameSessions = this.stats2.filter(item => item.sessionId === session)
+        uniqueSessionsCounts.push(sameSessions.length)
+      })
+      var sum = uniqueSessionsCounts.reduce((a,b) => a + b)
+      this.averagePages = sum / uniqueSessionsCounts.length
+    },
+    drawChartPagesHits () {
       var uniquePages = []
+      var uniquePagesTitle = []
       this.stats2.forEach(item => {
         if (!uniquePages.some(rec => {
-          return item.pageName === rec
+          return item.page === rec
         })) {
-          uniquePages.push(item.pageName)
+          uniquePages.push(item.page)
+          uniquePagesTitle.push(item.pageName)
         }
       })
       uniquePages.sort()
@@ -69,7 +96,7 @@ export default {
 
       var uniquePageCounts = []
       uniquePages.forEach(page => {
-        var count = this.stats2.filter(item => item.pageName === page).length
+        var count = this.stats2.filter(item => item.page === page).length
         uniquePageCounts.push(count)
       })
       
@@ -78,7 +105,7 @@ export default {
           chart: {
           type: 'pie',
         },
-        labels: uniquePages,
+        labels: uniquePagesTitle,
         responsive: [{
           breakpoint: 480,
           options: {
@@ -91,7 +118,7 @@ export default {
           }
         }]
         }
-      var chart = new ApexCharts(document.querySelector('#chart'), options)
+      var chart = new ApexCharts(document.querySelector('#chartPagesHits'), options)
       chart.render()
     }
   }
@@ -99,7 +126,7 @@ export default {
 </script>
 
 <style scoped>
-#chart {
+#chartPagesHits {
   max-width: 500px;
   margin: 35px auto;
 }
