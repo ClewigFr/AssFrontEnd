@@ -6,7 +6,7 @@
     <label>{{ msg.content }}</label>
     <div id="chart"></div>
     <h2>Json</h2>
-    <ul v-for="stat in stats2.stats" :key="stat.stats">
+    <ul v-for="stat in stats2" :key="stat.page">
       <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
     </ul>
   </div>
@@ -48,7 +48,7 @@ export default {
       .then(json => {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
-        this.stats2 = json
+        this.stats2 = json.stats
         this.drawChart()
       }, response => {
         this.msg.content = 'erreur'
@@ -56,16 +56,33 @@ export default {
   },
   methods: {
     drawChart () {
+      var uniquePages = []
+      this.stats2.forEach(item => {
+        if (!uniquePages.some(rec => {
+          return item.pageName === rec
+        })) {
+          uniquePages.push(item.pageName)
+        }
+      })
+      uniquePages.sort()
+      // this.msg.content = uniquePages
+
+      var uniquePageCounts = []
+      uniquePages.forEach(page => {
+        var count = this.stats2.filter(item => item.pageName === page).length
+        uniquePageCounts.push(count)
+      })
+      
       var options = {
         chart: {
-          type: 'line'
+          type: 'bar'
         },
         series: [{
-          name: 'hits',
-          data: [60, 70, 91, 35]
+          name: 'hits ',
+          data: uniquePageCounts
         }],
         xaxis: {
-          categories: [25, 26, 27, 28]
+          categories: uniquePages
         }
       }
       var chart = new ApexCharts(document.querySelector('#chart'), options)
