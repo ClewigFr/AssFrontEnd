@@ -1,10 +1,10 @@
 <template>
   <div class="stats">
     <h2>Stats: {{ msg.title }}</h2>
-    <label>Editer status : <input type="text" v-model="msg.title"/></label>
-    <h2>Content</h2>
     <label>{{ msg.content }}</label>
     <h2>Pages</h2>
+    <label>Filtrer page : <input type="text" v-model="pageFilter" /></label>
+    <!-- <label>PageFilter : {{ pageFilter }}</label> -->
     <div id="chartPagesHits"></div>
     <h2>Sessions</h2>
     <label>Total : {{ uniqueSessions.length }}</label>
@@ -40,7 +40,19 @@ export default {
       }],
       stats2: [],
       uniqueSessions: [],
-      averagePages: 0
+      averagePages: 0,
+      filter: ''
+    }
+  },
+  computed: {
+    pageFilter: {
+      get () {
+        return this.filter
+      },
+      set (newVal) {
+        this.filter = newVal
+        this.drawChartPagesHits()
+      }
     }
   },
   http: {
@@ -77,13 +89,19 @@ export default {
         var sameSessions = this.stats2.filter(item => item.sessionId === session)
         uniqueSessionsCounts.push(sameSessions.length)
       })
-      var sum = uniqueSessionsCounts.reduce((a,b) => a + b)
+      var sum = uniqueSessionsCounts.reduce((a, b) => a + b)
       this.averagePages = sum / uniqueSessionsCounts.length
     },
     drawChartPagesHits () {
       var uniquePages = []
       var uniquePagesTitle = []
-      this.stats2.forEach(item => {
+
+      var allData = this.stats2
+      if (this.filter.length > 0) {
+        allData = allData.filter(item => item.pageName.includes(this.filter))
+      }
+
+      allData.forEach(item => {
         if (!uniquePages.some(rec => {
           return item.page === rec
         })) {
@@ -92,18 +110,18 @@ export default {
         }
       })
       uniquePages.sort()
-      // this.msg.content = uniquePages
 
       var uniquePageCounts = []
       uniquePages.forEach(page => {
-        var count = this.stats2.filter(item => item.page === page).length
+        var count = allData.filter(item => item.page === page).length
         uniquePageCounts.push(count)
       })
-      
+
       var options = {
-          series: uniquePageCounts,
-          chart: {
-          type: 'pie',
+        series: uniquePageCounts,
+        chart: {
+          id: 'chart1',
+          type: 'pie'
         },
         labels: uniquePagesTitle,
         responsive: [{
@@ -117,7 +135,7 @@ export default {
             }
           }
         }]
-        }
+      }
       var chart = new ApexCharts(document.querySelector('#chartPagesHits'), options)
       chart.render()
     }
