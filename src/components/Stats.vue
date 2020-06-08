@@ -5,6 +5,10 @@
     <h2>Content</h2>
     <label>{{ msg.content }}</label>
     <div id="chart"></div>
+    <h2>Json</h2>
+    <ul v-for="stat in stats2.stats" :key="stat.stats">
+      <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
+    </ul>
   </div>
 </template>
 
@@ -22,7 +26,14 @@ export default {
       msg: {
         title: 'Stats initial title',
         content: 'Content loading...'
-      }
+      },
+      stats: [{
+        page: 'demo',
+        sessionId: 'azerty',
+        timestamp: 0,
+        pageName: 'pouet'
+      }],
+      stats2: []
     }
   },
   http: {
@@ -30,29 +41,36 @@ export default {
   },
   mounted () {
     this.msg.title = 'Loading...'
-    this.$resource('stats')
-      .get()
-      .then(
-        response => {
-          this.msg.title = 'Loaded'
-          this.msg.content = response.body
-        }
-      )
 
-    var options = {
-      chart: {
-        type: 'line'
-      },
-      series: [{
-        name: 'hits',
-        data: [60, 70, 91, 125]
-      }],
-      xaxis: {
-        categories: [25, 26, 27, 28]
+    this.$resource('stats/json')
+      .get()
+      .then(response => response.json())
+      .then(json => {
+        this.msg.title = 'Loaded'
+        this.msg.content = 'ok'
+        this.stats2 = json
+        this.drawChart()
+      }, response => {
+        this.msg.content = 'erreur'
+      })
+  },
+  methods: {
+    drawChart () {
+      var options = {
+        chart: {
+          type: 'line'
+        },
+        series: [{
+          name: 'hits',
+          data: [60, 70, 91, 35]
+        }],
+        xaxis: {
+          categories: [25, 26, 27, 28]
+        }
       }
+      var chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
     }
-    var chart = new ApexCharts(document.querySelector('#chart'), options)
-    chart.render()
   }
 }
 </script>
