@@ -74,17 +74,23 @@ export default {
       })
       
       var options = {
-        chart: {
-          type: 'bar'
+          series: uniquePageCounts,
+          chart: {
+          type: 'pie',
         },
-        series: [{
-          name: 'hits ',
-          data: uniquePageCounts
-        }],
-        xaxis: {
-          categories: uniquePages
+        labels: uniquePages,
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 400
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }]
         }
-      }
       var chart = new ApexCharts(document.querySelector('#chart'), options)
       chart.render()
     }
@@ -94,7 +100,7 @@ export default {
 
 <style scoped>
 #chart {
-  max-width: 650px;
+  max-width: 500px;
   margin: 35px auto;
 }
 </style>
