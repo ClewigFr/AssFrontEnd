@@ -80,11 +80,13 @@ export default {
       var dates = []
       this.uniqueSessions = []
       this.stats2.forEach(item => {
+        // handle sessions
         if (!this.uniqueSessions.some(rec => {
           return item.sessionId === rec
         })) {
           this.uniqueSessions.push(item.sessionId)
         }
+        // handle dates
         if (item.timestamp > 100000) { // prevent from wrong datas
           var date = new Date(item.timestamp)
           var formattedDate = date.getDate() + '/' + (date.getMonth() + 1)
@@ -118,7 +120,7 @@ export default {
           type: 'area'
         },
         series: [{
-          name: 'sessions',
+          name: 'sessions (total)',
           data: dates.map(item => item.count)
         }],
         xaxis: {
