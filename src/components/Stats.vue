@@ -1,15 +1,17 @@
 <template>
   <div class="stats">
-    <h2>Stats: {{ msg.title }}</h2>
-    <label>{{ msg.content }}</label>
+    <!-- <h2>Stats: {{ msg.title }}</h2> -->
+    <!-- <label>{{ msg.content }}</label> -->
     <h2>Pages</h2>
     <label>Filtrer page : <input type="text" v-model="pageFilter" /></label>
     <!-- <label>PageFilter : {{ pageFilter }}</label> -->
     <div id="chartPagesHits"></div>
     <h2>Sessions</h2>
-    <label>Total : {{ uniqueSessions.length }}</label>
+    <label>Total évenements : {{ this.stats2.length }}</label>
     <br/>
-    <label>Pages / session : {{ averagePages.toFixed(1) }}</label>
+    <label>Sessions uniques : {{ uniqueSessions.length }}</label>
+    <br/>
+    <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
     <div id="chartSessions"></div>
     <!-- <h2>Json</h2>
     <ul v-for="stat in stats2" :key="stat.page">
@@ -30,15 +32,9 @@ export default {
   data () {
     return {
       msg: {
-        title: 'Stats initial title',
-        content: 'Content loading...'
+        title: 'Stats',
+        content: 'Chargement...'
       },
-      // stats: [{
-      //   page: 'demo',
-      //   sessionId: 'azerty',
-      //   timestamp: 0,
-      //   pageName: 'pouet'
-      // }],
       stats2: [],
       uniqueSessions: [],
       averagePages: 0,
@@ -60,7 +56,7 @@ export default {
     root: 'https://gentle-inlet-02091.herokuapp.com'
   },
   mounted () {
-    this.msg.title = 'Loading...'
+    this.msg.title = 'Chargement...'
 
     this.$resource('stats/json')
       .get()
@@ -72,7 +68,7 @@ export default {
         this.drawChartPagesHits()
         this.drawChartSession()
       }, response => {
-        this.msg.content = 'erreur'
+        this.msg.content = 'Erreur'
       })
   },
   methods: {
