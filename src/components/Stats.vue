@@ -93,12 +93,15 @@ export default {
           if (!dates.some(rec => {
             return formattedDate === rec.date
           })) {
-            dates.push({'date': formattedDate, 'count': 1})
+            dates.push({'date': formattedDate, 'sessions': [item.sessionId], 'total': 1})
           } else {
             var dateItem = dates.filter(item => item.date === formattedDate)[0]
             var index = dates.indexOf(dateItem)
             if (index >= 0) {
-              dates[index].count = dates[index].count + 1
+              dates[index].total = dates[index].total + 1
+              if (!dates[index].sessions.some(sessionId => sessionId === item.sessionId)) {
+                dates[index].sessions.push(item.sessionId)
+              }
             }
           }
         }
@@ -120,8 +123,12 @@ export default {
           type: 'area'
         },
         series: [{
-          name: 'sessions (total)',
-          data: dates.map(item => item.count)
+          name: 'Sessions (unique)',
+          data: dates.map(item => item.sessions.length)
+        },
+        {
+          name: 'Sessions (total)',
+          data: dates.map(item => item.total)
         }],
         xaxis: {
           categories: dates.map(item => item.date)
