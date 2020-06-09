@@ -9,7 +9,8 @@
     <h2>Sessions</h2>
     <label>Total : {{ uniqueSessions.length }}</label>
     <br/>
-    <label>Pages / session : {{ averagePages }}</label>
+    <label>Pages / session : {{ averagePages.toFixed(1) }}</label>
+    <div id="chartSessions"></div>
     <!-- <h2>Json</h2>
     <ul v-for="stat in stats2" :key="stat.page">
       <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
@@ -32,12 +33,12 @@ export default {
         title: 'Stats initial title',
         content: 'Content loading...'
       },
-      stats: [{
-        page: 'demo',
-        sessionId: 'azerty',
-        timestamp: 0,
-        pageName: 'pouet'
-      }],
+      // stats: [{
+      //   page: 'demo',
+      //   sessionId: 'azerty',
+      //   timestamp: 0,
+      //   pageName: 'pouet'
+      // }],
       stats2: [],
       uniqueSessions: [],
       averagePages: 0,
@@ -76,6 +77,7 @@ export default {
   },
   methods: {
     drawChartSession () {
+      var dates = []
       this.uniqueSessions = []
       this.stats2.forEach(item => {
         if (!this.uniqueSessions.some(rec => {
@@ -83,7 +85,25 @@ export default {
         })) {
           this.uniqueSessions.push(item.sessionId)
         }
+        if (item.timestamp > 100000) { // prevent from wrong datas
+          var date = new Date(item.timestamp)
+          var formattedDate = date.getDate() + '/' + (date.getMonth() + 1)
+          if (!dates.some(rec => {
+            return formattedDate === rec.date
+          })) {
+            dates.push({'date': formattedDate, 'count': 1})
+          } else {
+            var dateItem = dates.filter(item => item.date === formattedDate)[0]
+            var index = dates.indexOf(dateItem)
+            if (index >= 0) {
+              dates[index].count = dates[index].count + 1
+            }
+          }
+        }
       })
+      dates.sort((a, b) => a.date > b.date)
+
+      // compute sessions average
       var uniqueSessionsCounts = []
       this.uniqueSessions.forEach(session => {
         var sameSessions = this.stats2.filter(item => item.sessionId === session)
@@ -91,11 +111,28 @@ export default {
       })
       var sum = uniqueSessionsCounts.reduce((a, b) => a + b)
       this.averagePages = sum / uniqueSessionsCounts.length
+
+      // draw
+      var options = {
+        chart: {
+          type: 'area'
+        },
+        series: [{
+          name: 'sessions',
+          data: dates.map(item => item.count)
+        }],
+        xaxis: {
+          categories: dates.map(item => item.date)
+        }
+      }
+      var chart = new ApexCharts(document.querySelector('#chartSessions'), options)
+      chart.render()
     },
     drawChartPagesHits () {
       var uniquePages = []
       var uniquePagesTitle = []
 
+      // compute data
       var allData = this.stats2
       if (this.filter.length > 0) {
         allData = allData.filter(item => item.pageName.includes(this.filter))
@@ -116,11 +153,10 @@ export default {
         var count = allData.filter(item => item.page === page).length
         uniquePageCounts.push(count)
       })
-
+      // draw
       var options = {
         series: uniquePageCounts,
         chart: {
-          id: 'chart1',
           type: 'pie'
         },
         labels: uniquePagesTitle,
@@ -146,6 +182,10 @@ export default {
 <style scoped>
 #chartPagesHits {
   max-width: 500px;
+  margin: 35px auto;
+}
+#chartSessions {
+  max-width: 600px;
   margin: 35px auto;
 }
 </style>
