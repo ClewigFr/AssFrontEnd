@@ -2,10 +2,7 @@
   <div class="stats">
     <!-- <h2>Stats: {{ msg.title }}</h2> -->
     <!-- <label>{{ msg.content }}</label> -->
-    <h2>Pages</h2>
-    <label>Filtrer page : <input type="text" v-model="pageFilter" /></label>
-    <!-- <label>PageFilter : {{ pageFilter }}</label> -->
-    <div id="chartPagesHits"></div>
+
     <h2>Sessions</h2>
     <label>Total évenements : {{ this.stats2.length }}</label>
     <br/>
@@ -13,6 +10,12 @@
     <br/>
     <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
     <div id="chartSessions"></div>
+
+    <h2>Pages</h2>
+    <label>Filtrer page : <input type="text" v-model="pageFilter" /></label>
+    <!-- <label>PageFilter : {{ pageFilter }}</label> -->
+    <div id="chartPagesHits"></div>
+
     <!-- <h2>Json</h2>
     <ul v-for="stat in stats2" :key="stat.page">
       <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
@@ -83,15 +86,18 @@ export default {
           this.uniqueSessions.push(item.sessionId)
         }
         // handle dates
-        if (item.timestamp > 100000) { // prevent from wrong datas
+        if (item.timestamp > 100000) { // prevent from wrong data
           var date = new Date(item.timestamp)
           var formattedDate = date.getDate() + '/' + (date.getMonth() + 1)
           if (!dates.some(rec => {
-            return formattedDate === rec.date
+            return formattedDate === rec.formattedDate
           })) {
-            dates.push({'date': formattedDate, 'sessions': [item.sessionId], 'total': 1})
+            dates.push({'date': date,
+              'formattedDate': formattedDate,
+              'sessions': [item.sessionId],
+              'total': 1})
           } else {
-            var dateItem = dates.filter(item => item.date === formattedDate)[0]
+            var dateItem = dates.filter(item => item.formattedDate === formattedDate)[0]
             var index = dates.indexOf(dateItem)
             if (index >= 0) {
               dates[index].total = dates[index].total + 1
@@ -127,7 +133,7 @@ export default {
           data: dates.map(item => item.total)
         }],
         xaxis: {
-          categories: dates.map(item => item.date)
+          categories: dates.map(item => item.formattedDate)
         }
       }
       var chart = new ApexCharts(document.querySelector('#chartSessions'), options)
