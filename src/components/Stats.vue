@@ -4,7 +4,7 @@
     <!-- <label>{{ msg.content }}</label> -->
 
     <h2>Sessions</h2>
-    <label>Total évenements : {{ this.stats2.length }}</label>
+    <label>Total évenements : {{ this.stats.length }}</label>
     <br/>
     <label>Sessions uniques : {{ uniqueSessions.length }}</label>
     <br/>
@@ -17,7 +17,7 @@
     <div id="chartPagesHits"></div>
 
     <!-- <h2>Json</h2>
-    <ul v-for="stat in stats2" :key="stat.page">
+    <ul v-for="stat in stats" :key="stat.page">
       <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
     </ul> -->
   </div>
@@ -38,7 +38,8 @@ export default {
         title: 'Stats',
         content: 'Chargement...'
       },
-      stats2: [],
+      stats: [],
+      pages: [],
       uniqueSessions: [],
       averagePages: 0,
       filter: ''
@@ -67,7 +68,8 @@ export default {
       .then(json => {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
-        this.stats2 = json.stats
+        this.stats = json.stats
+        this.pages = json.pages
         this.drawChartPagesHits()
         this.drawChartSession()
       }, response => {
@@ -78,7 +80,7 @@ export default {
     drawChartSession () {
       var dates = []
       this.uniqueSessions = []
-      this.stats2.forEach(item => {
+      this.stats.forEach(item => {
         // handle sessions
         if (!this.uniqueSessions.some(rec => {
           return item.sessionId === rec
@@ -113,7 +115,7 @@ export default {
       // compute sessions average
       var uniqueSessionsCounts = []
       this.uniqueSessions.forEach(session => {
-        var sameSessions = this.stats2.filter(item => item.sessionId === session)
+        var sameSessions = this.stats.filter(item => item.sessionId === session)
         uniqueSessionsCounts.push(sameSessions.length)
       })
       var sum = uniqueSessionsCounts.reduce((a, b) => a + b)
@@ -140,28 +142,15 @@ export default {
       chart.render()
     },
     drawChartPagesHits () {
-      var uniquePages = []
-      var uniquePagesTitle = []
-
-      // compute data
-      var allData = this.stats2
+      // filter data
+      var filtredPages = this.pages
       if (this.filter.length > 0) {
-        allData = allData.filter(item => item.pageName.includes(this.filter))
+        filtredPages = filtredPages.filter(item => item.name.includes(this.filter))
       }
-
-      allData.forEach(item => {
-        if (!uniquePages.some(rec => {
-          return item.page === rec
-        })) {
-          uniquePages.push(item.page)
-          uniquePagesTitle.push(item.pageName)
-        }
-      })
-      uniquePages.sort()
-
+      // compute data
       var uniquePageCounts = []
-      uniquePages.forEach(page => {
-        var count = allData.filter(item => item.page === page).length
+      filtredPages.forEach(page => {
+        var count = this.stats.filter(item => item.page === page.id).length
         uniquePageCounts.push(count)
       })
       // draw
@@ -170,7 +159,7 @@ export default {
         chart: {
           type: 'pie'
         },
-        labels: uniquePagesTitle,
+        labels: filtredPages.map(item => item.name),
         responsive: [{
           breakpoint: 480,
           options: {
