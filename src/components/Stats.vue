@@ -25,6 +25,7 @@
 
 <script>
 import ApexCharts from 'apexcharts'
+import { groupByDay, countBySession, averagePagesPerSession, hitsPerPage } from '@/stats'
 
 export default {
   name: 'Stats',
@@ -79,33 +80,9 @@ export default {
   },
   methods: {
     drawChartSession () {
-      // Group events per calendar day (year included) and collect unique sessions
-      const days = new Map()
-      const sessionCounts = new Map()
-      this.stats.forEach(item => {
-        sessionCounts.set(item.sessionId, (sessionCounts.get(item.sessionId) || 0) + 1)
-        if (item.timestamp > 100000) { // prevent from wrong data
-          const date = new Date(item.timestamp)
-          const key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
-          let day = days.get(key)
-          if (!day) {
-            day = {
-              key: key,
-              formattedDate: date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear(),
-              sessions: new Set(),
-              total: 0
-            }
-            days.set(key, day)
-          }
-          day.total++
-          day.sessions.add(item.sessionId)
-        }
-      })
-      const dates = Array.from(days.values()).sort((a, b) => a.key - b.key)
-
-      // compute sessions average (0 when there is no data yet)
-      this.uniqueSessions = Array.from(sessionCounts.keys())
-      this.averagePages = sessionCounts.size === 0 ? 0 : this.stats.length / sessionCounts.size
+      const dates = groupByDay(this.stats)
+      this.uniqueSessions = Array.from(countBySession(this.stats).keys())
+      this.averagePages = averagePagesPerSession(this.stats)
 
       // draw
       const options = {
@@ -132,16 +109,7 @@ export default {
       }
     },
     drawChartPagesHits () {
-      // filter data
-      let filtredPages = this.pages
-      if (this.filter.length > 0) {
-        filtredPages = filtredPages.filter(item => item.name.includes(this.filter))
-      }
-      // compute data: views per page id
-      const hitsPerPage = new Map()
-      this.stats.forEach(item => hitsPerPage.set(item.page, (hitsPerPage.get(item.page) || 0) + 1))
-      const uniquePageCounts = filtredPages.map(page => hitsPerPage.get(page.id) || 0)
-      const labels = filtredPages.map(item => item.name)
+      const { labels, counts: uniquePageCounts } = hitsPerPage(this.stats, this.pages, this.filter)
 
       // draw (reuse the same chart so typing in the filter does not stack charts)
       if (this.pagesChart) {
