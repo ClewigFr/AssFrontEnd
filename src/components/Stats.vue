@@ -1,32 +1,144 @@
 <template>
   <div class="stats">
-    <h2>Sessions</h2>
-    <label>Total évenements : {{ events }}</label>
-    <br>
-    <label>Sessions uniques : {{ sessions }}</label>
-    <br>
-    <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
+    <div class="toolbar">
+      <div
+        class="periods"
+        role="tablist"
+      >
+        <button
+          v-for="p in periods"
+          :key="p.key"
+          type="button"
+          role="tab"
+          :aria-selected="p.key === period"
+          :class="{ active: p.key === period }"
+          @click="setPeriod(p.key)"
+        >
+          {{ p.label }}
+        </button>
+      </div>
+      <div class="navigation">
+        <button
+          type="button"
+          title="Période précédente"
+          @click="move(-1)"
+        >
+          ◀
+        </button>
+        <span class="range">{{ rangeLabel }}</span>
+        <button
+          type="button"
+          title="Période suivante"
+          :disabled="offset >= 0"
+          @click="move(1)"
+        >
+          ▶
+        </button>
+      </div>
+    </div>
+
+    <p
+      v-if="error"
+      class="error"
+    >
+      {{ error }}
+    </p>
+
     <div
-      ref="chartSessions"
-      class="chart-sessions"
+      v-if="stats"
+      class="kpis"
+    >
+      <div
+        v-for="k in cards"
+        :key="k.key"
+        class="kpi"
+      >
+        <div class="kpi-label">
+          {{ k.label }}
+        </div>
+        <div class="kpi-value">
+          {{ k.value }}
+        </div>
+        <div
+          v-if="k.delta"
+          class="kpi-delta"
+          :class="[k.delta.trend, k.delta.trend === k.better ? 'good' : (k.delta.trend === 'flat' ? '' : 'bad')]"
+          :title="'Par rapport à ' + k.previousLabel"
+        >
+          {{ k.delta.trend === 'up' ? '▲' : k.delta.trend === 'down' ? '▼' : '' }} {{ k.delta.label }}
+        </div>
+        <div
+          v-else
+          class="kpi-delta"
+        >
+          &nbsp;
+        </div>
+      </div>
+    </div>
+
+    <h2>Activité</h2>
+    <div
+      ref="chart"
+      class="chart"
     />
 
     <h2>Pages</h2>
-    <label>Filtrer page : <input
-      v-model="pageFilter"
-      type="text"
+    <label class="filter">Filtrer : <input
+      v-model="filter"
+      type="search"
+      placeholder="Nom de page"
     ></label>
-    <div
-      ref="chartPagesHits"
-      class="chart-pages"
-    />
+    <table
+      v-if="rows.length"
+      class="pages-table"
+    >
+      <thead>
+        <tr>
+          <th>Page</th>
+          <th>Vues</th>
+          <th>Sessions</th>
+          <th>Part du trafic</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="row in rows"
+          :key="row.id"
+        >
+          <td>{{ row.name }}</td>
+          <td class="num">
+            {{ formatNumber(row.views) }}
+          </td>
+          <td class="num">
+            {{ formatNumber(row.sessions) }}
+          </td>
+          <td>
+            <div class="share">
+              <div
+                class="share-bar"
+                :style="{ width: (row.share * 100) + '%' }"
+              />
+              <span>{{ formatPercent(row.share) }}</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p
+      v-else-if="stats"
+      class="hint"
+    >
+      Aucune page ne correspond.
+    </p>
   </div>
 </template>
 
 <script>
 import ApexCharts from 'apexcharts'
 import { api } from '@/api'
-import { averagePagesPerSession, daySeries, pageSlices, timeZoneOffsetMinutes } from '@/stats'
+import {
+  PERIODS, bucketSeries, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
+} from '@/stats'
 
 export default {
   name: 'StatsPage',
@@ -35,134 +147,106 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return {
-      msg: {
-        title: 'Stats',
-        content: 'Chargement...'
-      },
-      events: 0,
-      sessions: 0,
-      pages: [],
-      days: [],
-      filter: ''
-    }
+    return { periods: PERIODS, period: 'week', offset: 0, stats: null, filter: '', error: '' }
   },
   computed: {
-    averagePages () {
-      return averagePagesPerSession(this.events, this.sessions)
+    cards () {
+      return this.stats ? kpis(this.stats) : []
     },
-    pageFilter: {
-      get () {
-        return this.filter
-      },
-      set (newVal) {
-        this.filter = newVal
-        this.drawChartPagesHits()
-      }
+    rows () {
+      return this.stats ? pageRows(this.stats.pages, this.filter, this.stats.current.views) : []
+    },
+    rangeLabel () {
+      return this.stats ? formatRange(this.stats.from, this.stats.to, this.stats.period) : ''
     }
   },
   mounted () {
     this.load()
   },
   beforeUnmount () {
-    if (this.sessionsChart) this.sessionsChart.destroy()
-    if (this.pagesChart) this.pagesChart.destroy()
+    if (this.chart) this.chart.destroy()
   },
   methods: {
-    // Called on mount, and by the parent after pages change
+    formatNumber,
+    formatPercent,
+    setPeriod (period) {
+      this.period = period
+      this.offset = 0
+      this.load()
+    },
+    move (step) {
+      this.offset = Math.min(0, this.offset + step)
+      this.load()
+    },
+    // Called on mount, on period changes, and by the parent after pages change
     load () {
-      this.msg.title = 'Chargement...'
-      // The backend aggregates per day in our time zone
-      return api.get(`apps/${this.appId}/stats?tz=${timeZoneOffsetMinutes()}`)
-      .then(json => {
-        this.msg.title = 'Loaded'
-        this.msg.content = 'ok'
-        this.events = json.events || 0
-        this.sessions = json.sessions || 0
-        this.pages = json.pages || []
-        this.days = json.days || []
-        this.drawChartPagesHits()
-        this.drawChartSession()
-      })
-      .catch(error => {
-        if (error.status === 401) {
-          // Session expired or missing: go back to the login page
-          this.$emit('authenticated', false)
-        } else {
-          this.msg.content = 'Erreur'
-        }
-      })
+      const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`
+      const requested = query
+      return api.get(`apps/${this.appId}/stats?${query}`)
+        .then(json => {
+          if (requested !== `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`) return // a newer request is on its way
+          this.error = ''
+          this.stats = json
+          this.drawChart()
+        })
+        .catch(error => {
+          if (error.status === 401) this.$emit('authenticated', false)
+          else this.error = 'Impossible de charger les statistiques.'
+        })
     },
-    drawChartSession () {
-      const series = daySeries(this.days)
-
-      // draw
+    drawChart () {
+      const series = bucketSeries(this.stats)
       const options = {
-        chart: {
-          type: 'area'
-        },
-        series: [{
-          name: 'Sessions (unique)',
-          data: series.sessions
-        },
-        {
-          name: 'Sessions (total)',
-          data: series.events
-        }],
-        xaxis: {
-          categories: series.categories
-        }
+        chart: { type: 'area', height: 300, toolbar: { show: false }, animations: { enabled: false } },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        series: [
+          { name: 'Pages vues', data: series.views },
+          { name: 'Sessions', data: series.sessions }
+        ],
+        xaxis: { categories: series.categories, tickAmount: Math.min(series.categories.length, 12) },
+        yaxis: { min: 0, forceNiceScale: true, labels: { formatter: v => formatNumber(v) } },
+        legend: { position: 'top' }
       }
-      if (this.sessionsChart) {
-        this.sessionsChart.updateOptions(options)
+      if (this.chart) {
+        this.chart.updateOptions(options)
       } else {
-        this.sessionsChart = new ApexCharts(this.$refs.chartSessions, options)
-        this.sessionsChart.render()
+        this.chart = new ApexCharts(this.$refs.chart, options)
+        this.chart.render()
       }
-    },
-    drawChartPagesHits () {
-      const { labels, counts: uniquePageCounts } = pageSlices(this.pages, this.filter)
-
-      // draw (reuse the same chart so typing in the filter does not stack charts)
-      if (this.pagesChart) {
-        this.pagesChart.updateOptions({ series: uniquePageCounts, labels: labels })
-        return
-      }
-      const options = {
-        series: uniquePageCounts,
-        chart: {
-          type: 'pie'
-        },
-        labels: labels,
-        noData: {
-          text: 'Aucune donnée'
-        },
-        responsive: [{
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 400
-            },
-            legend: {
-              position: 'bottom'
-            }
-          }
-        }]
-      }
-      this.pagesChart = new ApexCharts(this.$refs.chartPagesHits, options)
-      this.pagesChart.render()
     }
   }
 }
 </script>
 
 <style scoped>
-.chart-pages {
-  max-width: 500px;
-  margin: 35px auto;
-}
-.chart-sessions {
-  max-width: 600px;
-  margin: 35px auto;
-}
+.stats { margin-top: 30px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+.periods button { border: 1px solid #ccc; background: #fff; padding: 6px 14px; cursor: pointer; }
+.periods button:first-child { border-radius: 6px 0 0 6px; }
+.periods button:last-child { border-radius: 0 6px 6px 0; }
+.periods button + button { border-left: none; }
+.periods button.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
+.navigation { display: flex; align-items: center; gap: 8px; }
+.navigation button { border: 1px solid #ccc; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.navigation button:disabled { opacity: 0.4; cursor: default; }
+.range { min-width: 180px; font-weight: 600; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 20px 0; }
+.kpi { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: left; }
+.kpi-label { color: #6b7280; font-size: 0.85em; }
+.kpi-value { font-size: 1.5em; font-weight: 700; margin: 4px 0; }
+.kpi-delta { font-size: 0.85em; color: #6b7280; }
+.kpi-delta.good { color: #15803d; }
+.kpi-delta.bad { color: #b91c1c; }
+.chart { max-width: 760px; margin: 0 auto; }
+.filter { display: block; margin-bottom: 8px; }
+.pages-table { width: 100%; border-collapse: collapse; text-align: left; }
+.pages-table th, .pages-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+.pages-table th { color: #6b7280; font-weight: 600; font-size: 0.85em; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.share { position: relative; background: #f3f4f6; border-radius: 4px; height: 20px; min-width: 120px; }
+.share-bar { position: absolute; inset: 0 auto 0 0; background: #93c5fd; border-radius: 4px; }
+.share span { position: relative; padding-left: 6px; font-size: 0.85em; line-height: 20px; }
+.error { color: #b91c1c; }
+.hint { color: #6b7280; }
 </style>

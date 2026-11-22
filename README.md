@@ -51,8 +51,8 @@ npm run lint         # ESLint
 ## Project layout
 
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
-- `src/stats.js`: the statistics calculations, kept free of DOM code so they can be unit tested (`test/stats.test.js`).
+- `src/stats.js`: formatting and derived values for the stats (trends, durations, chart series, table rows), kept free of DOM code so they can be unit tested (`test/stats.test.js`).
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
 - `src/components/AppDetail.vue`: one application, with its pages (add or delete; each page's UUID is what `logScreen` takes) and its stats.
-- `src/components/Stats.vue`: the charts of one application. Loaded on demand, so ApexCharts isn't downloaded on the login page.
+- `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page.
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.
