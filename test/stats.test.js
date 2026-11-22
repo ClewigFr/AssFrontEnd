@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { groupByDay, countBySession, averagePagesPerSession, hitsPerPage } from '@/stats'
 
 const day = (y, m, d, h = 12) => new Date(y, m - 1, d, h).getTime()

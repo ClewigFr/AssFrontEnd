@@ -5,16 +5,19 @@
 
     <h2>Sessions</h2>
     <label>Total évenements : {{ stats.length }}</label>
-    <br/>
+    <br>
     <label>Sessions uniques : {{ uniqueSessions.length }}</label>
-    <br/>
+    <br>
     <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
-    <div id="chartSessions"></div>
+    <div id="chartSessions" />
 
     <h2>Pages</h2>
-    <label>Filtrer page : <input type="text" v-model="pageFilter" /></label>
+    <label>Filtrer page : <input
+      v-model="pageFilter"
+      type="text"
+    ></label>
     <!-- <label>PageFilter : {{ pageFilter }}</label> -->
-    <div id="chartPagesHits"></div>
+    <div id="chartPagesHits" />
 
     <!-- <h2>Json</h2>
     <ul v-for="stat in stats" :key="stat.page">
@@ -25,10 +28,12 @@
 
 <script>
 import ApexCharts from 'apexcharts'
+import { api } from '@/api'
 import { groupByDay, countBySession, averagePagesPerSession, hitsPerPage } from '@/stats'
 
 export default {
-  name: 'Stats',
+  name: 'StatsPage',
+  emits: ['authenticated'],
   data () {
     return {
       msg: {
@@ -56,17 +61,17 @@ export default {
   mounted () {
     this.msg.title = 'Chargement...'
 
-    this.$http.get('stats/json')
-      .then(response => {
-        const json = response.body
+    api.get('stats/json')
+      .then(json => {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
         this.stats = json.stats || []
         this.pages = json.pages || []
         this.drawChartPagesHits()
         this.drawChartSession()
-      }, response => {
-        if (response.status === 401) {
+      })
+      .catch(error => {
+        if (error.status === 401) {
           // Session expired or missing: go back to the login page
           this.$emit('authenticated', false)
         } else {
@@ -74,7 +79,7 @@ export default {
         }
       })
   },
-  beforeDestroy () {
+  beforeUnmount () {
     if (this.sessionsChart) this.sessionsChart.destroy()
     if (this.pagesChart) this.pagesChart.destroy()
   },

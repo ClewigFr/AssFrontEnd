@@ -1,26 +1,13 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Stats from '@/components/Stats'
-import Login from '@/components/Login'
-Vue.use(Router)
+import { createRouter, createWebHashHistory } from 'vue-router'
+import Login from '@/components/Login.vue'
 
-export default new Router({
+// Hash history keeps URLs like /#/stats working on a plain static file server
+export default createRouter({
+  history: createWebHashHistory(),
   routes: [
-    // {
-    //   path: '/',
-    //   redirect: {
-    //     name: 'login'
-    //   }
-    // },
-    {
-      path: '/login',
-      name: 'login',
-      component: Login
-    },
-    {
-      path: '/stats',
-      name: 'stats',
-      component: Stats
-    }
+    { path: '/', redirect: { name: 'login' } },
+    { path: '/login', name: 'login', component: Login },
+    // Loaded on demand: keeps ApexCharts out of the login page's bundle
+    { path: '/stats', name: 'stats', component: () => import('@/components/Stats.vue') }
   ]
 })

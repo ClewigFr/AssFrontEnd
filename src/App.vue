@@ -1,13 +1,19 @@
 <template>
   <div id="app">
     <div id="nav">
-      <a v-if="authenticated" href="#" v-on:click.prevent="logout()">Logout</a>
+      <a
+        v-if="authenticated"
+        href="#"
+        @click.prevent="logout()"
+      >Logout</a>
     </div>
     <router-view @authenticated="setAuthenticated" />
   </div>
 </template>
 
 <script>
+import { api } from '@/api'
+
 export default {
   name: 'App',
   data () {
@@ -17,24 +23,22 @@ export default {
   },
   mounted () {
     // Ask the backend whether the session cookie is still valid
-    this.$http.get('login')
-      .then(response => {
-        this.setAuthenticated(response.body === 'Logged')
-      }, () => {
-        this.setAuthenticated(false)
-      })
+    api.get('login')
+      .then(body => this.setAuthenticated(body === 'Logged'))
+      .catch(() => this.setAuthenticated(false))
   },
   methods: {
-    setAuthenticated (status) {
+    async setAuthenticated (status) {
       this.authenticated = status
       const target = status ? 'stats' : 'login'
+      await this.$router.isReady()
       if (this.$route.name !== target) {
         this.$router.replace({ name: target })
       }
     },
     logout () {
-      this.$http.get('logout')
-        .then(() => this.setAuthenticated(false), () => this.setAuthenticated(false))
+      api.get('logout')
+        .finally(() => this.setAuthenticated(false))
     }
   }
 }

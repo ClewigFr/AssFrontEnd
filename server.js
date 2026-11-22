@@ -1,10 +1,12 @@
-var express = require('express')
-var path = require('path')
-var serveStatic = require('serve-static')
+import express from 'express'
+import serveStatic from 'serve-static'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
-var app = express()
-app.use(serveStatic(path.join(__dirname, 'dist')))
-var port = process.env.PORT || 5000
+const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist')
+const app = express()
+app.use(serveStatic(dist))
+const port = process.env.PORT || 5000
 
 app.listen(port)
 console.log('server started on port ' + port)
