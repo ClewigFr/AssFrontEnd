@@ -2,6 +2,15 @@
 
 > A Vue.js project
 
+## Backend URL
+
+The dashboard calls the AssBackend API, and its base URL is set at build time:
+
+- **Dev** (`npm run dev`): `http://localhost:8099` by default. Start the backend with `PORT=8099`, because the dev server already uses 8080.
+- **Prod** (`npm run build`): set `BACKEND_URL=https://your-api.example.com`. If it's not set, the old Heroku host is used.
+
+The backend must list this dashboard's origin in its `CORS_ORIGINS` setting, or the browser blocks every request.
+
 ## Build Setup
 
 ``` bash

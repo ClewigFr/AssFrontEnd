@@ -3,6 +3,12 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import VueResource from 'vue-resource'
+
+Vue.use(VueResource)
+Vue.http.options.root = process.env.BACKEND_URL
+// Send the session cookie to the backend (it lives on another origin)
+Vue.http.options.credentials = true
 
 Vue.config.productionTip = false
 Vue.config.devtools = true

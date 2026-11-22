@@ -28,12 +28,11 @@ export default {
       var formData = new FormData()
       formData.append('userId', this.input.username)
       formData.append('password', this.input.password)
-      this.$http.post(this.$parent.backEndUrl + '/login', formData)
+      this.$http.post('login', formData)
         .then(response => {
           if (response.body === 'Logged') {
+            this.input.error = ''
             this.$emit('authenticated', true)
-            this.$router.replace({ name: 'stats' })
-            this.input.error = 'ok'
           } else {
             this.input.error = 'The username and / or password is incorrect'
           }

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div id="nav">
-      <router-link v-if="authenticated" to="/login" v-on:click.native="logout()" replace>Logout</router-link>
+      <a v-if="authenticated" href="#" v-on:click.prevent="logout()">Logout</a>
     </div>
     <router-view @authenticated="setAuthenticated" />
   </div>
@@ -12,24 +12,29 @@ export default {
   name: 'App',
   data () {
     return {
-      authenticated: false,
-      backEndUrl: 'https://gentle-inlet-02091.herokuapp.com'
+      authenticated: false
     }
   },
   mounted () {
-    if (!this.authenticated) {
-      this.$router.replace({name: 'login'})
-    }
+    // Ask the backend whether the session cookie is still valid
+    this.$http.get('login')
+      .then(response => {
+        this.setAuthenticated(response.body === 'Logged')
+      }, () => {
+        this.setAuthenticated(false)
+      })
   },
   methods: {
     setAuthenticated (status) {
       this.authenticated = status
+      const target = status ? 'stats' : 'login'
+      if (this.$route.name !== target) {
+        this.$router.replace({ name: target })
+      }
     },
     logout () {
-      this.$http.get(this.backEndUrl + '/logout')
-        .then(response => {
-          this.authenticated = false
-        })
+      this.$http.get('logout')
+        .then(() => this.setAuthenticated(false), () => this.setAuthenticated(false))
     }
   }
 }
