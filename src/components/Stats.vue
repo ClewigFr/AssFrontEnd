@@ -4,9 +4,9 @@
     <!-- <label>{{ msg.content }}</label> -->
 
     <h2>Sessions</h2>
-    <label>Total évenements : {{ stats.length }}</label>
+    <label>Total évenements : {{ events }}</label>
     <br>
-    <label>Sessions uniques : {{ uniqueSessions.length }}</label>
+    <label>Sessions uniques : {{ sessions }}</label>
     <br>
     <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
     <div id="chartSessions" />
@@ -18,18 +18,13 @@
     ></label>
     <!-- <label>PageFilter : {{ pageFilter }}</label> -->
     <div id="chartPagesHits" />
-
-    <!-- <h2>Json</h2>
-    <ul v-for="stat in stats" :key="stat.page">
-      <li> {{ stat.page }} / {{ stat.sessionId }} / {{ stat.timestamp }} / {{ stat.pageName }} </li>
-    </ul> -->
   </div>
 </template>
 
 <script>
 import ApexCharts from 'apexcharts'
 import { api } from '@/api'
-import { groupByDay, countBySession, averagePagesPerSession, hitsPerPage } from '@/stats'
+import { averagePagesPerSession, daySeries, pageSlices, timeZoneOffsetMinutes } from '@/stats'
 
 export default {
   name: 'StatsPage',
@@ -40,14 +35,17 @@ export default {
         title: 'Stats',
         content: 'Chargement...'
       },
-      stats: [],
+      events: 0,
+      sessions: 0,
       pages: [],
-      uniqueSessions: [],
-      averagePages: 0,
+      days: [],
       filter: ''
     }
   },
   computed: {
+    averagePages () {
+      return averagePagesPerSession(this.events, this.sessions)
+    },
     pageFilter: {
       get () {
         return this.filter
@@ -61,12 +59,15 @@ export default {
   mounted () {
     this.msg.title = 'Chargement...'
 
-    api.get('stats/json')
+    // The backend aggregates per day in our time zone
+    api.get(`stats/json?tz=${timeZoneOffsetMinutes()}`)
       .then(json => {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
-        this.stats = json.stats || []
+        this.events = json.events || 0
+        this.sessions = json.sessions || 0
         this.pages = json.pages || []
+        this.days = json.days || []
         this.drawChartPagesHits()
         this.drawChartSession()
       })
@@ -85,9 +86,7 @@ export default {
   },
   methods: {
     drawChartSession () {
-      const dates = groupByDay(this.stats)
-      this.uniqueSessions = Array.from(countBySession(this.stats).keys())
-      this.averagePages = averagePagesPerSession(this.stats)
+      const series = daySeries(this.days)
 
       // draw
       const options = {
@@ -96,14 +95,14 @@ export default {
         },
         series: [{
           name: 'Sessions (unique)',
-          data: dates.map(item => item.sessions.size)
+          data: series.sessions
         },
         {
           name: 'Sessions (total)',
-          data: dates.map(item => item.total)
+          data: series.events
         }],
         xaxis: {
-          categories: dates.map(item => item.formattedDate)
+          categories: series.categories
         }
       }
       if (this.sessionsChart) {
@@ -114,7 +113,7 @@ export default {
       }
     },
     drawChartPagesHits () {
-      const { labels, counts: uniquePageCounts } = hitsPerPage(this.stats, this.pages, this.filter)
+      const { labels, counts: uniquePageCounts } = pageSlices(this.pages, this.filter)
 
       // draw (reuse the same chart so typing in the filter does not stack charts)
       if (this.pagesChart) {

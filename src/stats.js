@@ -1,52 +1,39 @@
-// Pure statistics helpers used by Stats.vue (kept DOM-free so they can be unit tested).
+// Turns the backend's aggregated stats ({ events, sessions, pages, days }) into chart data.
+// Kept DOM-free so it can be unit tested.
 
-// Events with a smaller timestamp are considered corrupt and left out of the day chart
-export const MIN_VALID_TIMESTAMP = 100000
+export const DAY_MS = 24 * 60 * 60 * 1000
 
-// Group events per calendar day (year included), sorted chronologically
-export function groupByDay (stats) {
-  const days = new Map()
-  stats.forEach(item => {
-    if (item.timestamp > MIN_VALID_TIMESTAMP) {
-      const date = new Date(item.timestamp)
-      const key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
-      let day = days.get(key)
-      if (!day) {
-        day = {
-          key: key,
-          formattedDate: date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear(),
-          sessions: new Set(),
-          total: 0
-        }
-        days.set(key, day)
-      }
-      day.total++
-      day.sessions.add(item.sessionId)
-    }
-  })
-  return Array.from(days.values()).sort((a, b) => a.key - b.key)
+// Minutes east of UTC for the browser (what the backend's ?tz= expects)
+export function timeZoneOffsetMinutes (date = new Date()) {
+  return -date.getTimezoneOffset()
 }
 
-// Number of events per session id
-export function countBySession (stats) {
-  const counts = new Map()
-  stats.forEach(item => counts.set(item.sessionId, (counts.get(item.sessionId) || 0) + 1))
-  return counts
+// "d/m/yyyy" for a day number (days since 1970-01-01, already shifted to the local time zone by the backend)
+export function formatDay (day) {
+  const date = new Date(day * DAY_MS)
+  return date.getUTCDate() + '/' + (date.getUTCMonth() + 1) + '/' + date.getUTCFullYear()
+}
+
+// Per-day series for the sessions chart, in chronological order
+export function daySeries (days) {
+  const sorted = [...(days || [])].sort((a, b) => a.day - b.day)
+  return {
+    categories: sorted.map(d => formatDay(d.day)),
+    sessions: sorted.map(d => d.sessions),
+    events: sorted.map(d => d.events)
+  }
 }
 
 // Average pages viewed per session (0 when there is no data)
-export function averagePagesPerSession (stats) {
-  const sessions = countBySession(stats).size
-  return sessions === 0 ? 0 : stats.length / sessions
+export function averagePagesPerSession (events, sessions) {
+  return sessions > 0 ? events / sessions : 0
 }
 
 // Views per page, for the pages whose name contains filter
-export function hitsPerPage (stats, pages, filter) {
-  const hits = new Map()
-  stats.forEach(item => hits.set(item.page, (hits.get(item.page) || 0) + 1))
-  const shown = filter ? pages.filter(page => page.name.includes(filter)) : pages
+export function pageSlices (pages, filter) {
+  const shown = filter ? (pages || []).filter(page => page.name.includes(filter)) : (pages || [])
   return {
     labels: shown.map(page => page.name),
-    counts: shown.map(page => hits.get(page.id) || 0)
+    counts: shown.map(page => page.views)
   }
 }
