@@ -1,23 +1,25 @@
 <template>
   <div class="stats">
-    <!-- <h2>Stats: {{ msg.title }}</h2> -->
-    <!-- <label>{{ msg.content }}</label> -->
-
     <h2>Sessions</h2>
     <label>Total évenements : {{ events }}</label>
     <br>
     <label>Sessions uniques : {{ sessions }}</label>
     <br>
     <label>Pages vues / session : {{ averagePages.toFixed(1) }}</label>
-    <div id="chartSessions" />
+    <div
+      ref="chartSessions"
+      class="chart-sessions"
+    />
 
     <h2>Pages</h2>
     <label>Filtrer page : <input
       v-model="pageFilter"
       type="text"
     ></label>
-    <!-- <label>PageFilter : {{ pageFilter }}</label> -->
-    <div id="chartPagesHits" />
+    <div
+      ref="chartPagesHits"
+      class="chart-pages"
+    />
   </div>
 </template>
 
@@ -28,6 +30,9 @@ import { averagePagesPerSession, daySeries, pageSlices, timeZoneOffsetMinutes } 
 
 export default {
   name: 'StatsPage',
+  props: {
+    appId: { type: String, required: true }
+  },
   emits: ['authenticated'],
   data () {
     return {
@@ -57,10 +62,18 @@ export default {
     }
   },
   mounted () {
-    this.msg.title = 'Chargement...'
-
-    // The backend aggregates per day in our time zone
-    api.get(`stats/json?tz=${timeZoneOffsetMinutes()}`)
+    this.load()
+  },
+  beforeUnmount () {
+    if (this.sessionsChart) this.sessionsChart.destroy()
+    if (this.pagesChart) this.pagesChart.destroy()
+  },
+  methods: {
+    // Called on mount, and by the parent after pages change
+    load () {
+      this.msg.title = 'Chargement...'
+      // The backend aggregates per day in our time zone
+      return api.get(`apps/${this.appId}/stats?tz=${timeZoneOffsetMinutes()}`)
       .then(json => {
         this.msg.title = 'Loaded'
         this.msg.content = 'ok'
@@ -79,12 +92,7 @@ export default {
           this.msg.content = 'Erreur'
         }
       })
-  },
-  beforeUnmount () {
-    if (this.sessionsChart) this.sessionsChart.destroy()
-    if (this.pagesChart) this.pagesChart.destroy()
-  },
-  methods: {
+    },
     drawChartSession () {
       const series = daySeries(this.days)
 
@@ -108,7 +116,7 @@ export default {
       if (this.sessionsChart) {
         this.sessionsChart.updateOptions(options)
       } else {
-        this.sessionsChart = new ApexCharts(document.querySelector('#chartSessions'), options)
+        this.sessionsChart = new ApexCharts(this.$refs.chartSessions, options)
         this.sessionsChart.render()
       }
     },
@@ -141,7 +149,7 @@ export default {
           }
         }]
       }
-      this.pagesChart = new ApexCharts(document.querySelector('#chartPagesHits'), options)
+      this.pagesChart = new ApexCharts(this.$refs.chartPagesHits, options)
       this.pagesChart.render()
     }
   }
@@ -149,11 +157,11 @@ export default {
 </script>
 
 <style scoped>
-#chartPagesHits {
+.chart-pages {
   max-width: 500px;
   margin: 35px auto;
 }
-#chartSessions {
+.chart-sessions {
   max-width: 600px;
   margin: 35px auto;
 }

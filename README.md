@@ -21,7 +21,7 @@ Requirements: **Node.js 22.12 or newer** (tested with Node 26 LTS).
    ```bash
    npm run dev
    ```
-4. Open http://localhost:8080 and log in with the account created by `seed-dev.sh`. Its login and password are at the top of that script.
+4. Open http://localhost:8080 and log in with the account created by `seed-dev.sh`. Its login and password are at the top of that script. It also creates a "Demo app" with three pages and some views.
 
 Things to know:
 - Restarting the backend wipes its data (in-memory database) and logs you out. Run `seed-dev.sh` again, then log in again.
@@ -52,5 +52,7 @@ npm run lint         # ESLint
 
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
 - `src/stats.js`: the statistics calculations, kept free of DOM code so they can be unit tested (`test/stats.test.js`).
-- `src/components/Stats.vue`: the charts. This page is loaded on demand, so ApexCharts isn't downloaded on the login page.
+- `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
+- `src/components/AppDetail.vue`: one application, with its pages (add or delete; each page's UUID is what `logScreen` takes) and its stats.
+- `src/components/Stats.vue`: the charts of one application. Loaded on demand, so ApexCharts isn't downloaded on the login page.
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.

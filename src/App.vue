@@ -30,10 +30,12 @@ export default {
   methods: {
     async setAuthenticated (status) {
       this.authenticated = status
-      const target = status ? 'stats' : 'login'
       await this.$router.isReady()
-      if (this.$route.name !== target) {
-        this.$router.replace({ name: target })
+      // Logged out: always go to login. Logged in: leave the login page for the apps list.
+      if (!status && this.$route.name !== 'login') {
+        this.$router.replace({ name: 'login' })
+      } else if (status && this.$route.name === 'login') {
+        this.$router.replace({ name: 'apps' })
       }
     },
     logout () {
@@ -45,6 +47,13 @@ export default {
 </script>
 
 <style>
+/* The colours below are designed for a light background: don't inherit a dark browser theme */
+:root {
+  color-scheme: light;
+}
+body {
+  background: #ffffff;
+}
 #app {
   font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

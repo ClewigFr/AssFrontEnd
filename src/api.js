@@ -11,10 +11,11 @@ export class ApiError extends Error {
   }
 }
 
-async function request (method, path, body) {
-  const response = await fetch(`${BACKEND_URL}/${path}`, { method, body, credentials: 'include' })
+async function request (method, path, body, headers) {
+  const response = await fetch(`${BACKEND_URL}/${path}`, { method, body, headers, credentials: 'include' })
   const type = response.headers.get('content-type') || ''
-  const data = type.includes('application/json') ? await response.json() : await response.text()
+  const data = response.status === 204 ? null
+    : type.includes('application/json') ? await response.json() : await response.text()
   if (!response.ok) throw new ApiError(response.status, data)
   return data
 }
@@ -22,5 +23,7 @@ async function request (method, path, body) {
 export const api = {
   get: (path) => request('GET', path),
   // Form-encoded, as the backend's /login and /register expect
-  postForm: (path, fields) => request('POST', path, new URLSearchParams(fields))
+  postForm: (path, fields) => request('POST', path, new URLSearchParams(fields)),
+  postJson: (path, data) => request('POST', path, JSON.stringify(data), { 'Content-Type': 'application/json' }),
+  delete: (path) => request('DELETE', path)
 }
