@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bucketSeries, delta, formatDuration, formatPercent, kpis, pageRows, timeZoneOffsetMinutes } from '@/stats'
+import { bucketSeries, delta, formatDuration, formatPercent, detailCoverage, detailNote, kpis, pageRows, timeZoneOffsetMinutes } from '@/stats'
 
 const summary = (o = {}) => ({ views: 0, sessions: 0, pagesPerSession: 0, avgSessionMs: 0, bounceRate: 0, ...o })
 
@@ -92,5 +92,48 @@ describe('timeZoneOffsetMinutes', () => {
   it('is minutes east of UTC', () => {
     expect(timeZoneOffsetMinutes({ getTimezoneOffset: () => -60 })).toBe(60)
     expect(timeZoneOffsetMinutes({ getTimezoneOffset: () => 300 })).toBe(-300)
+  })
+})
+
+describe('retention (detailFrom)', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  const now = Date.UTC(2026, 10, 23)
+  const base = {
+    period: 'month',
+    from: now - 30 * DAY,
+    to: now,
+    detailFrom: now - 90 * DAY,
+    current: { views: 10, sessions: 4, pagesPerSession: 2.5, avgSessionMs: 1000, bounceRate: 0.25 },
+    previous: { views: 5, sessions: 2, pagesPerSession: 2.5, avgSessionMs: 1000, bounceRate: 0.5 }
+  }
+
+  it('says how much of the period has session details', () => {
+    expect(detailCoverage(base)).toBe('full')
+    expect(detailCoverage({ ...base, detailFrom: null })).toBe('full')
+    expect(detailCoverage({ ...base, from: now - 100 * DAY, to: now - 70 * DAY })).toBe('partial')
+    expect(detailCoverage({ ...base, from: now - 130 * DAY, to: now - 100 * DAY })).toBe('none')
+  })
+
+  it('explains what is missing, only when something is', () => {
+    expect(detailNote(base, now)).toBeNull()
+    expect(detailNote({ ...base, from: now - 130 * DAY, to: now - 100 * DAY }, now)).toContain('Au-delà de 90 jours')
+    expect(detailNote({ ...base, from: now - 100 * DAY, to: now - 70 * DAY }, now)).toContain('depuis le')
+  })
+
+  it('hides session figures and comparisons that the data no longer supports', () => {
+    const byKey = list => Object.fromEntries(list.map(k => [k.key, k]))
+    const full = byKey(kpis(base))
+    expect(full.sessions.delta).not.toBeNull()
+
+    const none = byKey(kpis({ ...base, from: now - 130 * DAY, to: now - 100 * DAY }))
+    expect(none.sessions.value).toBe('—')
+    expect(none.bounce.delta).toBeNull()
+    expect(none.views.value).toBe('10')
+    expect(none.views.delta).not.toBeNull()
+
+    // Current period fully detailed, previous one not: no session comparison
+    const edge = byKey(kpis({ ...base, from: now - 80 * DAY, to: now - 50 * DAY }))
+    expect(edge.sessions.value).toBe('4')
+    expect(edge.sessions.delta).toBeNull()
   })
 })

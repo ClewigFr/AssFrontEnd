@@ -76,6 +76,13 @@
       </div>
     </div>
 
+    <p
+      v-if="note"
+      class="hint retention"
+    >
+      {{ note }}
+    </p>
+
     <h2>Activité</h2>
     <div
       ref="chart"
@@ -110,7 +117,7 @@
             {{ formatNumber(row.views) }}
           </td>
           <td class="num">
-            {{ formatNumber(row.sessions) }}
+            {{ noSessions ? '—' : formatNumber(row.sessions) }}
           </td>
           <td>
             <div class="share">
@@ -137,7 +144,7 @@
 import ApexCharts from 'apexcharts'
 import { api } from '@/api'
 import {
-  PERIODS, bucketSeries, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
+  PERIODS, bucketSeries, detailCoverage, detailNote, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
 } from '@/stats'
 
 export default {
@@ -155,6 +162,12 @@ export default {
     },
     rows () {
       return this.stats ? pageRows(this.stats.pages, this.filter, this.stats.current.views) : []
+    },
+    note () {
+      return this.stats ? detailNote(this.stats) : null
+    },
+    noSessions () {
+      return this.stats ? detailCoverage(this.stats) === 'none' : false
     },
     rangeLabel () {
       return this.stats ? formatRange(this.stats.from, this.stats.to, this.stats.period) : ''
@@ -249,4 +262,5 @@ export default {
 .share span { position: relative; padding-left: 6px; font-size: 0.85em; line-height: 20px; }
 .error { color: #b91c1c; }
 .hint { color: #6b7280; }
+.retention { font-size: 0.9em; max-width: 640px; margin: 8px auto; }
 </style>

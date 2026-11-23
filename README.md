@@ -55,7 +55,7 @@ npm run lint         # ESLint
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
 - `src/components/AppDetail.vue`: one application, with its pages (add or delete; each page's UUID is what `logScreen` takes) and its stats. Pages can also be imported from a CSV and exported to one, see below.
 - `src/pagesCsv.js`: CSV parsing and writing for the import and export (`test/pagesCsv.test.js`).
-- `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page.
+- `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page. For periods older than the backend's retention (90 days by default), only views are kept: session figures show `—` or cover only the recent part, and a note explains it (`detailFrom` in the stats response).
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.
 
 ## Importing and exporting pages (CSV)
