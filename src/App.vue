@@ -39,7 +39,7 @@ export default {
       }
     },
     logout () {
-      api.get('logout')
+      api.post('logout')
         .finally(() => this.setAuthenticated(false))
     }
   }

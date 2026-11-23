@@ -22,6 +22,7 @@ async function request (method, path, body, headers) {
 
 export const api = {
   get: (path) => request('GET', path),
+  post: (path) => request('POST', path),
   // Form-encoded, as the backend's /login and /register expect
   postForm: (path, fields) => request('POST', path, new URLSearchParams(fields)),
   postJson: (path, data) => request('POST', path, JSON.stringify(data), { 'Content-Type': 'application/json' }),
