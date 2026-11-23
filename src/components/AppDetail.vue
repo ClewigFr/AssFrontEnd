@@ -30,6 +30,37 @@
           Ajouter
         </button>
       </form>
+      <p class="csv">
+        <input
+          ref="csvFile"
+          type="file"
+          accept=".csv,.txt,text/csv,text/plain"
+          hidden
+          @change="importCsv"
+        >
+        <button
+          type="button"
+          :disabled="importing"
+          title="Un nom de page par ligne, dans la première colonne"
+          @click="$refs.csvFile.click()"
+        >
+          {{ importing ? 'Import…' : 'Importer un CSV' }}
+        </button>
+        <button
+          type="button"
+          :disabled="pages.length === 0"
+          title="name, id, app_id : de quoi appeler logScreen pour chaque page"
+          @click="exportCsv"
+        >
+          Exporter en CSV
+        </button>
+      </p>
+      <p
+        v-if="importResult"
+        class="hint"
+      >
+        {{ importResult }}
+      </p>
       <p
         v-if="error"
         class="error"
@@ -89,6 +120,7 @@
 <script>
 import { api } from '@/api'
 import CopyId from '@/components/CopyId.vue'
+import { csvFileName, pageNamesFromCsv, pagesToCsv } from '@/pagesCsv'
 import StatsPage from '@/components/Stats.vue'
 
 export default {
@@ -99,7 +131,7 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return { app: null, pages: [], notFound: false, newPage: '', error: '' }
+    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '' }
   },
   mounted () {
     this.load()
@@ -122,6 +154,48 @@ export default {
       } catch (error) {
         this.handleError(error)
       }
+    },
+    async importCsv (event) {
+      const file = event.target.files[0]
+      event.target.value = ''
+      if (!file) return
+      this.error = ''
+      this.importResult = ''
+      const names = pageNamesFromCsv(await file.text())
+      if (names.length === 0) {
+        this.error = 'Aucun nom de page trouvé : mettez un nom par ligne, dans la première colonne.'
+        return
+      }
+      if (names.length > 1000) {
+        this.error = `Le fichier contient ${names.length} pages : 1000 au maximum par import.`
+        return
+      }
+      if (names.some(name => name.length > 255)) {
+        this.error = 'Un nom de page dépasse 255 caractères.'
+        return
+      }
+      this.importing = true
+      try {
+        const result = await api.postJson(`apps/${this.id}/pages/batch`, { names })
+        const created = result.created.length
+        const existing = result.existing.length
+        this.importResult = `${created} page${created > 1 ? 's' : ''} créée${created > 1 ? 's' : ''}` +
+          (existing ? `, ${existing} existai${existing > 1 ? 'ent' : 't'} déjà.` : '.')
+        await this.load()
+        if (created) this.$refs.stats?.load()
+      } catch (error) {
+        this.handleError(error)
+      } finally {
+        this.importing = false
+      }
+    },
+    exportCsv () {
+      const blob = new Blob(['\uFEFF' + pagesToCsv(this.app, this.pages)], { type: 'text/csv;charset=utf-8' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = csvFileName(this.app)
+      link.click()
+      URL.revokeObjectURL(link.href)
     },
     async removePage (page) {
       if (!confirm(`Supprimer la page « ${page.name} » et toutes ses vues ? C'est définitif.`)) return
@@ -156,6 +230,7 @@ export default {
 .hint { color: #666; }
 .create { margin: 12px 0; }
 .create input { width: 60%; }
+.csv button { margin: 0 4px; }
 .pages { margin: 0 auto; border-collapse: collapse; }
 .pages td { padding: 6px 10px; border-bottom: 1px solid #eee; text-align: left; }
 .danger { color: #c0392b; }
