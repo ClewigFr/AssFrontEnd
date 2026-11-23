@@ -53,14 +53,14 @@ npm run lint         # ESLint
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
 - `src/stats.js`: formatting and derived values for the stats (trends, durations, chart series, table rows), kept free of DOM code so they can be unit tested (`test/stats.test.js`).
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
-- `src/components/AppDetail.vue`: one application, with its pages (add or delete; each page's UUID is what `logScreen` takes) and its stats. Pages can also be imported from a CSV and exported to one, see below.
+- `src/components/AppDetail.vue`: one application, in two tabs (`?tab=stats|config` in the URL). **Statistiques** shows its stats. **Configuration** has its UUID, its pages (add or delete; each page's UUID is what `logScreen` takes; CSV import and export, see below) and the button that deletes it. An application without pages opens on Configuration.
 - `src/pagesCsv.js`: CSV parsing and writing for the import and export (`test/pagesCsv.test.js`).
 - `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page. For periods older than the backend's retention (90 days by default), only views are kept: session figures show `—` or cover only the recent part, and a note explains it (`detailFrom` in the stats response).
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.
 
 ## Importing and exporting pages (CSV)
 
-On an application's page:
+In an application's **Configuration** tab:
 
 - **Importer un CSV** creates the pages listed in a file: one page name per line, in the first column. Other columns are ignored, and so is a header row (`name`, `nom`, `page`…). Separators `,`, `;` or tab, quotes and UTF-8 with or without BOM are accepted, so a column exported from Excel or Google Sheets works. Names that already exist aren't created twice, so the same file can be imported again after adding lines. Up to 1000 pages per file.
 - **Exporter en CSV** downloads `name,id,app_id`, one line per page: everything needed to call `logScreen` for each screen. Give it to a developer or an AI assistant along with the library's README to add the tracking calls to an app.

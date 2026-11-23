@@ -6,110 +6,140 @@
 
     <template v-if="app">
       <h1>{{ app.name }}</h1>
-      <p class="hint">
-        UUID de l'application, à passer à la librairie (<code>AssConfig(appId = …)</code>) :
-      </p>
-      <CopyId :id="app.id" />
-
-      <h2>Pages suivies</h2>
-      <form
-        class="create"
-        @submit.prevent="addPage"
+      <div
+        class="tabs"
+        role="tablist"
       >
-        <input
-          v-model="newPage"
-          type="text"
-          name="pageName"
-          placeholder="Nom de la nouvelle page"
-          maxlength="255"
-        >
         <button
-          type="submit"
-          :disabled="!newPage.trim()"
-        >
-          Ajouter
-        </button>
-      </form>
-      <p class="csv">
-        <input
-          ref="csvFile"
-          type="file"
-          accept=".csv,.txt,text/csv,text/plain"
-          hidden
-          @change="importCsv"
-        >
-        <button
+          v-for="t in tabs"
+          :key="t.key"
           type="button"
-          :disabled="importing"
-          title="Un nom de page par ligne, dans la première colonne"
-          @click="$refs.csvFile.click()"
+          role="tab"
+          :aria-selected="t.key === tab"
+          :class="{ active: t.key === tab }"
+          @click="setTab(t.key)"
         >
-          {{ importing ? 'Import…' : 'Importer un CSV' }}
+          {{ t.label }}
         </button>
-        <button
-          type="button"
-          :disabled="pages.length === 0"
-          title="name, id, app_id : de quoi appeler logScreen pour chaque page"
-          @click="exportCsv"
-        >
-          Exporter en CSV
-        </button>
-      </p>
-      <p
-        v-if="importResult"
-        class="hint"
-      >
-        {{ importResult }}
-      </p>
-      <p
-        v-if="error"
-        class="error"
-      >
-        {{ error }}
-      </p>
-      <p
-        v-if="pages.length === 0"
-        class="hint"
-      >
-        Ajoutez une page, puis appelez <code>logScreen("&lt;UUID de la page&gt;")</code> quand elle s'affiche.
-      </p>
-      <table
-        v-else
-        class="pages"
-      >
-        <tr
-          v-for="page in pages"
-          :key="page.id"
-        >
-          <td>{{ page.name }}</td>
-          <td><CopyId :id="page.id" /></td>
-          <td>
-            <button
-              type="button"
-              class="danger"
-              @click="removePage(page)"
-            >
-              Supprimer
-            </button>
-          </td>
-        </tr>
-      </table>
+      </div>
 
-      <StatsPage
-        ref="stats"
-        :app-id="app.id"
-        @authenticated="$emit('authenticated', $event)"
-      />
-
-      <p class="delete-app">
-        <button
-          type="button"
-          class="danger"
-          @click="removeApp"
+      <template v-if="tab === 'stats'">
+        <p
+          v-if="pages.length === 0"
+          class="hint"
         >
-          Supprimer l'application
-        </button>
-      </p>
+          Aucune page suivie pour l'instant : ajoutez-en dans l'onglet
+          <a
+            href="#"
+            @click.prevent="setTab('config')"
+          >Configuration</a>.
+        </p>
+        <StatsPage
+          :app-id="app.id"
+          @authenticated="$emit('authenticated', $event)"
+        />
+      </template>
+
+      <template v-else>
+        <p class="hint">
+          UUID de l'application, à passer à la librairie (<code>AssConfig(appId = …)</code>) :
+        </p>
+        <CopyId :id="app.id" />
+
+        <h2>Pages suivies</h2>
+        <form
+          class="create"
+          @submit.prevent="addPage"
+        >
+          <input
+            v-model="newPage"
+            type="text"
+            name="pageName"
+            placeholder="Nom de la nouvelle page"
+            maxlength="255"
+          >
+          <button
+            type="submit"
+            :disabled="!newPage.trim()"
+          >
+            Ajouter
+          </button>
+        </form>
+        <p class="csv">
+          <input
+            ref="csvFile"
+            type="file"
+            accept=".csv,.txt,text/csv,text/plain"
+            hidden
+            @change="importCsv"
+          >
+          <button
+            type="button"
+            :disabled="importing"
+            title="Un nom de page par ligne, dans la première colonne"
+            @click="$refs.csvFile.click()"
+          >
+            {{ importing ? 'Import…' : 'Importer un CSV' }}
+          </button>
+          <button
+            type="button"
+            :disabled="pages.length === 0"
+            title="name, id, app_id : de quoi appeler logScreen pour chaque page"
+            @click="exportCsv"
+          >
+            Exporter en CSV
+          </button>
+        </p>
+        <p
+          v-if="importResult"
+          class="hint"
+        >
+          {{ importResult }}
+        </p>
+        <p
+          v-if="error"
+          class="error"
+        >
+          {{ error }}
+        </p>
+        <p
+          v-if="pages.length === 0"
+          class="hint"
+        >
+          Ajoutez une page, puis appelez <code>logScreen("&lt;UUID de la page&gt;")</code> quand elle s'affiche.
+        </p>
+        <table
+          v-else
+          class="pages"
+        >
+          <tr
+            v-for="page in pages"
+            :key="page.id"
+          >
+            <td>{{ page.name }}</td>
+            <td><CopyId :id="page.id" /></td>
+            <td>
+              <button
+                type="button"
+                class="danger"
+                @click="removePage(page)"
+              >
+                Supprimer
+              </button>
+            </td>
+          </tr>
+        </table>
+
+        <p class="delete-app">
+          <button
+            type="button"
+            class="danger"
+            @click="removeApp"
+          >
+            Supprimer l'application
+          </button>
+        </p>
+      </template>
     </template>
     <p v-else-if="notFound">
       Application introuvable.
@@ -133,10 +163,32 @@ export default {
   data () {
     return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '' }
   },
+  computed: {
+    tabs () {
+      return [{ key: 'stats', label: 'Statistiques' }, { key: 'config', label: 'Configuration' }]
+    },
+    // In the URL (?tab=config) so a reload or a shared link opens the same tab.
+    // Without it: stats, or the configuration while the application has no page yet.
+    tab () {
+      const tab = this.$route.query.tab
+      if (tab === 'stats' || tab === 'config') return tab
+      return this.app && this.pages.length === 0 ? 'config' : 'stats'
+    }
+  },
+  watch: {
+    // The same component is reused when going from one application to another
+    id () {
+      Object.assign(this, { app: null, pages: [], notFound: false, newPage: '', error: '', importResult: '' })
+      this.load()
+    }
+  },
   mounted () {
     this.load()
   },
   methods: {
+    setTab (tab) {
+      this.$router.replace({ query: { ...this.$route.query, tab } })
+    },
     load () {
       return api.get(`apps/${this.id}`)
         .then(json => { this.app = json.app; this.pages = json.pages })
@@ -150,7 +202,6 @@ export default {
         await api.postJson(`apps/${this.id}/pages`, { name })
         this.newPage = ''
         await this.load()
-        this.$refs.stats?.load()
       } catch (error) {
         this.handleError(error)
       }
@@ -182,7 +233,6 @@ export default {
         this.importResult = `${created} page${created > 1 ? 's' : ''} créée${created > 1 ? 's' : ''}` +
           (existing ? `, ${existing} existai${existing > 1 ? 'ent' : 't'} déjà.` : '.')
         await this.load()
-        if (created) this.$refs.stats?.load()
       } catch (error) {
         this.handleError(error)
       } finally {
@@ -202,7 +252,6 @@ export default {
       try {
         await api.delete(`apps/${this.id}/pages/${page.id}`)
         await this.load()
-        this.$refs.stats?.load()
       } catch (error) {
         this.handleError(error)
       }
@@ -227,6 +276,10 @@ export default {
 
 <style scoped>
 .app-detail { max-width: 720px; margin: 0 auto; }
+.tabs { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+.tabs button { border: 0; background: #fff; padding: 8px 20px; cursor: pointer; font: inherit; color: inherit; }
+.tabs button + button { border-left: 1px solid #d1d5db; }
+.tabs button.active { background: #2c3e50; color: #fff; }
 .hint { color: #666; }
 .create { margin: 12px 0; }
 .create input { width: 60%; }
