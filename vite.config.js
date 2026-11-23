@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 
 // Backend base URL, read at build/dev time: BACKEND_URL=https://api.example.com npm run build
 const backendUrl = process.env.BACKEND_URL ||
-  (process.env.NODE_ENV === 'production' ? 'https://gentle-inlet-02091.herokuapp.com' : 'http://localhost:8099')
+  (process.env.NODE_ENV === 'production' ? 'https://ass-api.clewig.fr' : 'http://localhost:8099')
 
 export default defineConfig({
   plugins: [vue()],

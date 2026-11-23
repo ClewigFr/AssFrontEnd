@@ -6,6 +6,12 @@
 
     <template v-if="app">
       <h1>{{ app.name }}</h1>
+      <p
+        v-if="error"
+        class="error"
+      >
+        {{ error }}
+      </p>
       <div
         class="tabs"
         role="tablist"
@@ -97,12 +103,6 @@
           {{ importResult }}
         </p>
         <p
-          v-if="error"
-          class="error"
-        >
-          {{ error }}
-        </p>
-        <p
           v-if="pages.length === 0"
           class="hint"
         >
@@ -143,6 +143,12 @@
     </template>
     <p v-else-if="notFound">
       Application introuvable.
+    </p>
+    <p
+      v-else-if="error"
+      class="error"
+    >
+      {{ error }}
     </p>
   </div>
 </template>
@@ -191,7 +197,7 @@ export default {
     },
     load () {
       return api.get(`apps/${this.id}`)
-        .then(json => { this.app = json.app; this.pages = json.pages })
+        .then(json => { this.app = json.app; this.pages = json.pages; this.notFound = false })
         .catch(this.handleError)
     },
     async addPage () {
@@ -245,16 +251,19 @@ export default {
       link.href = URL.createObjectURL(blob)
       link.download = csvFileName(this.app)
       link.click()
-      URL.revokeObjectURL(link.href)
+      // Revoked later: revoking right away can cancel the download in Firefox and Safari
+      setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
     },
     async removePage (page) {
       if (!confirm(`Supprimer la page « ${page.name} » et toutes ses vues ? C'est définitif.`)) return
+      this.error = ''
       try {
         await api.delete(`apps/${this.id}/pages/${page.id}`)
-        await this.load()
       } catch (error) {
-        this.handleError(error)
+        // Already gone: just refresh the list
+        if (error.status !== 404) return this.handleError(error)
       }
+      await this.load()
     },
     async removeApp () {
       if (!confirm(`Supprimer l'application « ${this.app.name} », ses pages et toutes ses vues ? C'est définitif.`)) return
@@ -267,7 +276,7 @@ export default {
     },
     handleError (error) {
       if (error.status === 401) this.$emit('authenticated', false)
-      else if (error.status === 404) this.notFound = true
+      else if (error.status === 404) { this.app = null; this.notFound = true }
       else this.error = 'Une erreur est survenue, réessayez.'
     }
   }

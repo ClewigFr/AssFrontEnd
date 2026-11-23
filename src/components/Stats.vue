@@ -191,7 +191,7 @@ export default {
       this.offset = Math.min(0, this.offset + step)
       this.load()
     },
-    // Called on mount, on period changes, and by the parent after pages change
+    // Called on mount and on period changes
     load () {
       const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`
       const requested = query
@@ -204,7 +204,11 @@ export default {
         })
         .catch(error => {
           if (error.status === 401) this.$emit('authenticated', false)
-          else this.error = 'Impossible de charger les statistiques.'
+          else {
+            // Don't leave the previous period's figures under the new period's buttons
+            this.stats = null
+            this.error = 'Impossible de charger les statistiques.'
+          }
         })
     },
     drawChart () {

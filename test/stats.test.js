@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bucketSeries, delta, formatDuration, formatPercent, detailCoverage, detailNote, kpis, pageRows, timeZoneOffsetMinutes } from '@/stats'
+import { bucketSeries, delta, pointsDelta, formatDuration, formatPercent, detailCoverage, detailNote, kpis, pageRows, timeZoneOffsetMinutes } from '@/stats'
 
 const summary = (o = {}) => ({ views: 0, sessions: 0, pagesPerSession: 0, avgSessionMs: 0, bounceRate: 0, ...o })
 
@@ -135,5 +135,13 @@ describe('retention (detailFrom)', () => {
     const edge = byKey(kpis({ ...base, from: now - 80 * DAY, to: now - 50 * DAY }))
     expect(edge.sessions.value).toBe('4')
     expect(edge.sessions.delta).toBeNull()
+  })
+})
+
+describe('pointsDelta', () => {
+  it('gives the change of a ratio in percentage points', () => {
+    expect(pointsDelta(0.5, 0.4)).toEqual({ label: '+10 pts', trend: 'up' })
+    expect(pointsDelta(0.25, 0.5)).toEqual({ label: '-25 pts', trend: 'down' })
+    expect(pointsDelta(0.3, 0.3)).toEqual({ label: '=', trend: 'flat' })
   })
 })

@@ -1,28 +1,38 @@
 <template>
-  <div id="login">
-    <h1>Login</h1>
+  <form
+    id="login"
+    @submit.prevent="login"
+  >
+    <h1>Connexion</h1>
     <input
       v-model="input.username"
       type="text"
       name="username"
-      placeholder="Username"
+      autocomplete="username"
+      placeholder="Identifiant"
+      required
     >
     <input
       v-model="input.password"
       type="password"
       name="password"
-      placeholder="Password"
+      autocomplete="current-password"
+      placeholder="Mot de passe"
+      required
     >
     <button
-      type="button"
-      @click="login()"
+      type="submit"
+      :disabled="loading"
     >
-      Login
+      Se connecter
     </button>
-    <p>
-      <label>{{ input.error }}</label>
+    <p
+      class="message"
+      role="alert"
+    >
+      {{ input.error }}
     </p>
-  </div>
+  </form>
 </template>
 
 <script>
@@ -33,6 +43,7 @@ export default {
   emits: ['authenticated'],
   data () {
     return {
+      loading: false,
       input: {
         username: '',
         password: '',
@@ -42,21 +53,23 @@ export default {
   },
   methods: {
     login () {
-      this.input.error = 'Login...'
+      this.loading = true
+      this.input.error = 'Connexion…'
       api.postForm('login', { userId: this.input.username, password: this.input.password })
         .then(body => {
           if (body === 'Logged') {
             this.input.error = ''
             this.$emit('authenticated', true)
           } else {
-            this.input.error = 'The username and / or password is incorrect'
+            this.input.error = 'Identifiant ou mot de passe incorrect.'
           }
         })
         .catch(error => {
-          this.input.error = error.status === 429
-            ? 'Too many failed attempts, try again in 15 minutes'
-            : 'The username and / or password is incorrect'
+          if (error.status === 429) this.input.error = 'Trop de tentatives échouées, réessayez dans 15 minutes.'
+          else if (error.status === 401 || error.status === 403) this.input.error = 'Identifiant ou mot de passe incorrect.'
+          else this.input.error = 'Serveur injoignable, réessayez plus tard.'
         })
+        .finally(() => { this.loading = false })
     }
   }
 }
@@ -64,11 +77,13 @@ export default {
 
 <style scoped>
 #login {
-  width: 500px;
+  max-width: 500px;
+  box-sizing: border-box;
   border: 1px solid #cccccc;
   background-color: #ffffff;
-  margin: auto;
-  margin-top: 200px;
+  margin: 200px auto 0;
   padding: 20px;
 }
+#login input, #login button { margin: 4px; }
+.message { min-height: 1.2em; }
 </style>

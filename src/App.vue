@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div class="ass-app">
     <div id="nav">
       <a
         v-if="authenticated"
@@ -54,7 +54,7 @@ export default {
 body {
   background: #ffffff;
 }
-#app {
+.ass-app {
   font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

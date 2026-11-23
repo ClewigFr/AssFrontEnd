@@ -10,7 +10,10 @@ ARG BACKEND_URL=https://ass-api.clewig.fr
 RUN BACKEND_URL=$BACKEND_URL npm run build
 
 FROM nginx:1.29-alpine
+ARG BACKEND_URL=https://ass-api.clewig.fr
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+# The CSP only lets the page call the API it was built for
+RUN sed -i "s|__BACKEND_URL__|${BACKEND_URL%/}|" /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist /usr/share/nginx/html
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO /dev/null http://127.0.0.1/ || exit 1

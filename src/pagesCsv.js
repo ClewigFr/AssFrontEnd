@@ -34,6 +34,8 @@ export function pageNamesFromCsv (text) {
 }
 
 function cell (value) {
+  // A leading = + - @ (or tab/CR) would make Excel run the name as a formula
+  if (/^[=+\-@\t\r]/.test(value)) value = `'${value}`
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
 

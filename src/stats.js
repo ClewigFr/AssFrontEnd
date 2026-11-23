@@ -69,6 +69,14 @@ export function delta (current, previous) {
   return { label: `${pct > 0 ? '+' : ''}${pct} %`, trend: pct > 0 ? 'up' : 'down' }
 }
 
+// Change of a ratio, in percentage points: 40 % -> 50 % is "+10 pts", not "+25 %"
+export function pointsDelta (current, previous) {
+  if (current == null || previous == null) return null
+  const pts = Math.round((current - previous) * 100)
+  if (pts === 0) return { label: '=', trend: 'flat' }
+  return { label: `${pts > 0 ? '+' : ''}${pts} pts`, trend: pts > 0 ? 'up' : 'down' }
+}
+
 // The indicator cards. "better" says whether a rise is good news (it isn't for the bounce rate).
 // How much of the period still has session details (raw views): 'full', 'partial' or 'none'.
 // Older views are only kept as counts per page and per day (stats.detailFrom, set by the backend's retention).
@@ -105,7 +113,7 @@ export function kpis (stats) {
     { key: 'sessions', label: 'Sessions', value: formatNumber(c.sessions), delta: delta(c.sessions, p.sessions), better: 'up' },
     { key: 'pps', label: 'Pages / session', value: formatNumber(c.pagesPerSession, 1), delta: delta(c.pagesPerSession, p.pagesPerSession), better: 'up' },
     { key: 'duration', label: 'Durée moyenne', value: formatDuration(c.avgSessionMs), delta: delta(c.avgSessionMs, p.avgSessionMs), better: 'up' },
-    { key: 'bounce', label: 'Taux de rebond', value: formatPercent(c.bounceRate), delta: delta(c.bounceRate, p.bounceRate), better: 'down' }
+    { key: 'bounce', label: 'Taux de rebond', value: formatPercent(c.bounceRate), delta: pointsDelta(c.bounceRate, p.bounceRate), better: 'down' }
   ].map(k => {
     if (!SESSION_KPIS.includes(k.key)) return k
     // Session figures can't be compared with a period that lost them, and don't exist when it's all gone

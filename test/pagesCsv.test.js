@@ -34,3 +34,11 @@ describe('csvFileName', () => {
     expect(csvFileName({ name: '***' })).toBe('application-pages.csv')
   })
 })
+
+describe('pagesToCsv formulas', () => {
+  it('neutralises names Excel would run as formulas', () => {
+    const csv = pagesToCsv({ id: 'a1', name: 'App' }, [{ id: 'p1', name: '=HYPERLINK("x")' }, { id: 'p2', name: '-home' }])
+    expect(csv).toContain(`"'=HYPERLINK(""x"")",p1,a1`)
+    expect(csv).toContain("'-home,p2,a1")
+  })
+})
