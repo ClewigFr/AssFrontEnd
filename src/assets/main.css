@@ -1,0 +1,205 @@
+/* Design tokens and shared styles. Light and dark follow the system setting. */
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f8;
+  --border: #e3e6ee;
+  --border-strong: #cdd2de;
+  --text: #1c2233;
+  --muted: #5d6579;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-soft: #eef0ff;
+  --on-primary: #ffffff;
+  --accent: #0d9488;
+  --success: #15803d;
+  --danger: #c0262d;
+  --danger-soft: #fdecec;
+  --warning-text: #7a4b00;
+  --warning-soft: #fff4dc;
+  --warning-border: #f0c36a;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1320;
+    --surface: #171c2b;
+    --surface-2: #1f2537;
+    --border: #2a3147;
+    --border-strong: #3a4360;
+    --text: #e6e9f2;
+    --muted: #9aa3b8;
+    --primary: #8b85ff;
+    --primary-hover: #a19cff;
+    --primary-soft: #26264a;
+    --on-primary: #10121c;
+    --accent: #2dd4bf;
+    --success: #4ade80;
+    --danger: #f87171;
+    --danger-soft: #3a1f24;
+    --warning-text: #fcd58a;
+    --warning-soft: #33290f;
+    --warning-border: #7a5a14;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 1.05rem; margin: 0 0 12px; }
+p { margin: 0 0 12px; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code { font-family: var(--mono); font-size: 0.85em; }
+
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Buttons: primary by default, .secondary, .danger, .link */
+button {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.93rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  background: var(--primary);
+  color: var(--on-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+button:hover:not(:disabled) { background: var(--primary-hover); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+button.secondary:hover:not(:disabled) { background: var(--surface-2); }
+button.danger { background: var(--surface); color: var(--danger); border-color: var(--border-strong); }
+button.danger:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
+button.small { padding: 4px 10px; font-size: 0.82rem; }
+
+/* Fields */
+input[type=text], input[type=email], input[type=password], input[type=search] {
+  font: inherit;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 0;
+}
+input::placeholder { color: var(--muted); opacity: 0.8; }
+input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+/* A field and its button on one line, stacked on phones */
+.inline-form { display: flex; gap: 8px; margin: 0 0 12px; }
+.inline-form input { flex: 1; }
+@media (max-width: 520px) {
+  .inline-form { flex-direction: column; }
+}
+
+.stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* Surfaces */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card > h2:first-child { margin-top: 0; }
+
+.page-head { margin: 0 0 20px; }
+.page-head .back { display: inline-block; font-size: 0.9rem; margin-bottom: 8px; }
+
+/* Text */
+.hint { color: var(--muted); font-size: 0.92rem; }
+.error { color: var(--danger); }
+.ok { color: var(--success); }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Banners */
+.banner {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  margin: 0 0 16px;
+}
+.banner.warning { background: var(--warning-soft); border-color: var(--warning-border); color: var(--warning-text); }
+.banner.danger { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+
+/* Tables: scroll sideways inside .table-wrap on narrow screens */
+.table-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+tbody tr:last-child td { border-bottom: 0; }
+
+/* Segmented control (tabs, periods) */
+.segmented {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.segmented button {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 14px;
+}
+.segmented button:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+/* The brand mark */
+.logo {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 800;
+  flex: none;
+}
+
+/* Login, forgotten password, reset */
+.auth-card {
+  max-width: 400px;
+  margin: 8vh auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.auth-card h1 { font-size: 1.35rem; }
+.auth-card .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: var(--muted); font-weight: 600; }
+.auth-card .message { min-height: 1.4em; margin: 0; }

@@ -3,6 +3,7 @@
     <code>{{ id }}</code>
     <button
       type="button"
+      class="secondary small"
       :title="'Copier ' + id"
       @click="copy"
     >{{ copied ? 'Copié ✓' : 'Copier' }}</button>
@@ -34,15 +35,13 @@ export default {
 </script>
 
 <style scoped>
+.copy-id { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 100%; }
 .copy-id code {
-  font-size: 0.85em;
-  background: #f3f4f6;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   padding: 2px 6px;
   border-radius: 4px;
   user-select: all;
-}
-.copy-id button {
-  margin-left: 6px;
-  font-size: 0.8em;
+  overflow-wrap: anywhere;
 }
 </style>

@@ -1,44 +1,62 @@
 <template>
   <div class="ass-app">
-    <div id="nav">
-      <template v-if="authenticated">
-        <router-link :to="{ name: 'apps' }">
-          Mes applications
+    <header
+      v-if="authenticated"
+      class="topbar"
+    >
+      <div class="topbar-inner">
+        <router-link
+          :to="{ name: 'apps' }"
+          class="brand"
+        >
+          <span
+            class="logo"
+            aria-hidden="true"
+          >A</span>
+          <span class="brand-name">Anonymous Simple Stats</span>
         </router-link>
-        <router-link :to="{ name: 'account' }">
-          Mon compte
-        </router-link>
-        <a
-          class="logout"
-          href="#"
-          @click.prevent="logout()"
-        >Se déconnecter</a>
-      </template>
+        <nav id="nav">
+          <router-link :to="{ name: 'apps' }">
+            Applications
+          </router-link>
+          <router-link :to="{ name: 'account' }">
+            Mon compte
+          </router-link>
+          <a
+            class="logout"
+            href="#"
+            @click.prevent="logout()"
+          >Se déconnecter</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content">
       <p
         v-if="logoutError"
-        class="logout-error"
+        class="banner danger"
         role="alert"
       >
         {{ logoutError }}
       </p>
-    </div>
-    <p
-      v-if="authenticated && alert"
-      class="quota-alert"
-      role="alert"
-    >
-      {{ alert }}
-      <router-link :to="{ name: 'account' }">
-        Détails
-      </router-link>
-    </p>
-    <router-view @authenticated="onAuthenticated" />
+      <p
+        v-if="authenticated && alert"
+        class="banner warning"
+        role="alert"
+      >
+        {{ alert }}
+        <router-link :to="{ name: 'account' }">
+          Détails
+        </router-link>
+      </p>
+      <router-view @authenticated="onAuthenticated" />
+    </main>
   </div>
 </template>
 
 <script>
 import { api } from '@/api'
 import { viewsAlert } from '@/quota'
+import { PUBLIC_ROUTES } from '@/router'
 
 export default {
   name: 'App',
@@ -80,8 +98,9 @@ export default {
       if (!status) this.logoutError = ''
       this.checkQuota()
       await this.$router.isReady()
-      // Logged out: always go to login. Logged in: leave the login page for the apps list.
-      if (!status && this.$route.name !== 'login') {
+      // Logged out: go to login, unless on a page that doesn't need it (forgotten password).
+      // Logged in: leave the login page for the apps list.
+      if (!status && !PUBLIC_ROUTES.includes(this.$route.name)) {
         this.$router.replace({ name: 'login' })
       } else if (status && this.$route.name === 'login') {
         this.$router.replace({ name: 'apps' })
@@ -102,33 +121,33 @@ export default {
 </script>
 
 <style>
-/* The colours below are designed for a light background: don't inherit a dark browser theme */
-:root {
-  color-scheme: light;
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
-body {
-  background: #ffffff;
+.topbar-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
-.ass-app {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-#nav a { margin: 0 10px; }
-#nav a.router-link-exact-active { font-weight: bold; }
-.quota-alert {
-  max-width: 720px;
-  margin: 16px auto;
-  padding: 10px 14px;
-  border: 1px solid #e0b252;
-  border-radius: 8px;
-  background: #fff6e0;
-  color: #7a5200;
-}
-.logout-error {
-  color: #c0392b;
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700; }
+.brand:hover { text-decoration: none; }
+#nav { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+#nav a { color: var(--muted); padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 500; }
+#nav a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+#nav a.router-link-active { color: var(--text); background: var(--surface-2); }
+.content { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+@media (max-width: 600px) {
+  .brand-name { display: none; }
+  #nav { flex-wrap: nowrap; gap: 0; }
+  #nav a { padding: 6px 7px; font-size: 0.85rem; white-space: nowrap; }
+  .content { padding-top: 16px; }
 }
 </style>

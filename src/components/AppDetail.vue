@@ -1,35 +1,45 @@
 <template>
   <div class="app-detail">
-    <router-link :to="{ name: 'apps' }">
-      ← Mes applications
-    </router-link>
+    <div class="page-head">
+      <router-link
+        :to="{ name: 'apps' }"
+        class="back"
+      >
+        ← Mes applications
+      </router-link>
+      <div
+        v-if="app"
+        class="title-row"
+      >
+        <h1>{{ app.name }}</h1>
+        <div
+          class="segmented"
+          role="tablist"
+        >
+          <button
+            v-for="t in tabs"
+            :id="'tab-' + t.key"
+            :key="t.key"
+            type="button"
+            role="tab"
+            :aria-controls="'panel-' + t.key"
+            :aria-selected="t.key === tab"
+            :class="{ active: t.key === tab }"
+            @click="setTab(t.key)"
+          >
+            {{ t.label }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <template v-if="app">
-      <h1>{{ app.name }}</h1>
       <p
         v-if="error"
-        class="error"
+        class="banner danger"
       >
         {{ error }}
       </p>
-      <div
-        class="tabs"
-        role="tablist"
-      >
-        <button
-          v-for="t in tabs"
-          :id="'tab-' + t.key"
-          :key="t.key"
-          type="button"
-          role="tab"
-          :aria-controls="'panel-' + t.key"
-          :aria-selected="t.key === tab"
-          :class="{ active: t.key === tab }"
-          @click="setTab(t.key)"
-        >
-          {{ t.label }}
-        </button>
-      </div>
 
       <div
         v-if="tab === 'stats'"
@@ -39,7 +49,7 @@
       >
         <p
           v-if="pages.length === 0"
-          class="hint"
+          class="banner"
         >
           Aucune page suivie pour l'instant : ajoutez-en dans l'onglet
           <a
@@ -59,96 +69,126 @@
         role="tabpanel"
         aria-labelledby="tab-config"
       >
-        <p class="hint">
-          UUID de l'application, à passer à la librairie (<code>AssConfig(appId = …)</code>) :
-        </p>
-        <CopyId :id="app.id" />
+        <section class="card">
+          <h2>Identifiant de l'application</h2>
+          <p class="hint">
+            À passer à la librairie : <code>AssConfig(appId = …)</code>.
+          </p>
+          <CopyId :id="app.id" />
+        </section>
 
-        <h2>Pages suivies</h2>
-        <p
-          v-if="maxPages"
-          class="hint"
-        >
-          {{ pages.length }} / {{ maxPages }} pages<span v-if="full"> : supprimez-en une pour en ajouter une autre.</span>
-        </p>
-        <form
-          class="create"
-          @submit.prevent="addPage"
-        >
-          <input
-            v-model="newPage"
-            type="text"
-            name="pageName"
-            placeholder="Nom de la nouvelle page"
-            maxlength="255"
+        <section class="card">
+          <div class="section-head">
+            <h2>Pages suivies</h2>
+            <span
+              v-if="maxPages"
+              class="hint"
+            >{{ pages.length }} / {{ maxPages }} pages</span>
+          </div>
+          <form
+            class="inline-form"
+            @submit.prevent="addPage"
           >
-          <button
-            type="submit"
-            :disabled="!newPage.trim() || full"
+            <input
+              v-model="newPage"
+              type="text"
+              name="pageName"
+              placeholder="Nom de la nouvelle page"
+              maxlength="255"
+            >
+            <button
+              type="submit"
+              :disabled="!newPage.trim() || full"
+            >
+              Ajouter
+            </button>
+          </form>
+          <p
+            v-if="full"
+            class="hint"
           >
-            Ajouter
-          </button>
-        </form>
-        <p class="csv">
-          <input
-            ref="csvFile"
-            type="file"
-            accept=".csv,.txt,text/csv,text/plain"
-            hidden
-            @change="importCsv"
+            Limite atteinte : supprimez une page pour en ajouter une autre.
+          </p>
+          <div class="csv">
+            <input
+              ref="csvFile"
+              type="file"
+              accept=".csv,.txt,text/csv,text/plain"
+              hidden
+              @change="importCsv"
+            >
+            <button
+              type="button"
+              class="secondary"
+              :disabled="importing || full"
+              title="Un nom de page par ligne, dans la première colonne"
+              @click="$refs.csvFile.click()"
+            >
+              {{ importing ? 'Import…' : 'Importer un CSV' }}
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              :disabled="pages.length === 0"
+              title="name, id, app_id : de quoi appeler logScreen pour chaque page"
+              @click="exportCsv"
+            >
+              Exporter en CSV
+            </button>
+          </div>
+          <p
+            v-if="importResult"
+            class="ok"
           >
-          <button
-            type="button"
-            :disabled="importing || full"
-            title="Un nom de page par ligne, dans la première colonne"
-            @click="$refs.csvFile.click()"
+            {{ importResult }}
+          </p>
+          <p
+            v-if="pages.length === 0"
+            class="hint"
           >
-            {{ importing ? 'Import…' : 'Importer un CSV' }}
-          </button>
-          <button
-            type="button"
-            :disabled="pages.length === 0"
-            title="name, id, app_id : de quoi appeler logScreen pour chaque page"
-            @click="exportCsv"
+            Ajoutez une page, puis appelez <code>logScreen("&lt;UUID de la page&gt;")</code> quand elle s'affiche.
+          </p>
+          <div
+            v-else
+            class="table-wrap"
           >
-            Exporter en CSV
-          </button>
-        </p>
-        <p
-          v-if="importResult"
-          class="hint"
-        >
-          {{ importResult }}
-        </p>
-        <p
-          v-if="pages.length === 0"
-          class="hint"
-        >
-          Ajoutez une page, puis appelez <code>logScreen("&lt;UUID de la page&gt;")</code> quand elle s'affiche.
-        </p>
-        <table
-          v-else
-          class="pages"
-        >
-          <tr
-            v-for="page in pages"
-            :key="page.id"
-          >
-            <td>{{ page.name }}</td>
-            <td><CopyId :id="page.id" /></td>
-            <td>
-              <button
-                type="button"
-                class="danger"
-                @click="removePage(page)"
-              >
-                Supprimer
-              </button>
-            </td>
-          </tr>
-        </table>
+            <table class="pages">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>UUID, pour <code>logScreen</code></th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="page in pages"
+                  :key="page.id"
+                >
+                  <td class="page-name">
+                    {{ page.name }}
+                  </td>
+                  <td><CopyId :id="page.id" /></td>
+                  <td class="actions">
+                    <button
+                      type="button"
+                      class="danger small"
+                      @click="removePage(page)"
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-        <p class="delete-app">
+        <section class="card danger-zone">
+          <h2>Zone de danger</h2>
+          <p class="hint">
+            Supprime l'application, ses pages et toutes leurs vues. C'est définitif.
+          </p>
           <button
             type="button"
             class="danger"
@@ -156,15 +196,18 @@
           >
             Supprimer l'application
           </button>
-        </p>
+        </section>
       </div>
     </template>
-    <p v-else-if="notFound">
+    <p
+      v-else-if="notFound"
+      class="banner"
+    >
       Application introuvable.
     </p>
     <p
       v-else-if="error"
-      class="error"
+      class="banner danger"
     >
       {{ error }}
     </p>
@@ -323,18 +366,19 @@ export default {
 </script>
 
 <style scoped>
-.app-detail { max-width: 720px; margin: 0 auto; }
-.tabs { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-.tabs button { border: 0; background: #fff; padding: 8px 20px; cursor: pointer; font: inherit; color: inherit; }
-.tabs button + button { border-left: 1px solid #d1d5db; }
-.tabs button.active { background: #2c3e50; color: #fff; }
-.hint { color: #666; }
-.create { margin: 12px 0; }
-.create input { width: 60%; }
-.csv button { margin: 0 4px; }
-.pages { margin: 0 auto; border-collapse: collapse; }
-.pages td { padding: 6px 10px; border-bottom: 1px solid #eee; text-align: left; }
-.danger { color: #c0392b; }
-.delete-app { margin-top: 40px; }
-.error { color: #c0392b; }
+.title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.csv { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.pages th code { text-transform: none; letter-spacing: 0; }
+.page-name { font-weight: 600; }
+.actions { text-align: right; }
+.danger-zone { border-color: var(--danger-soft); }
+/* Phones: one block per page (name and delete button, then the UUID) */
+@media (max-width: 600px) {
+  .pages thead { display: none; }
+  .pages tr { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .pages tbody tr:last-child { border-bottom: 0; }
+  .pages td { border: 0; padding: 0; }
+  .pages td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+}
 </style>

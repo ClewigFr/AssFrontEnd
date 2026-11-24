@@ -20,7 +20,8 @@ function makeRouter () {
     routes: [
       { path: '/login', name: 'login', component: Login },
       { path: '/apps', name: 'apps', component: { template: '<p>apps</p>' } },
-      { path: '/account', name: 'account', component: { template: '<p>account</p>' } }
+      { path: '/account', name: 'account', component: { template: '<p>account</p>' } },
+      { path: '/forgot', name: 'forgot', component: { template: '<p>forgot</p>' } }
     ]
   })
 }
@@ -30,7 +31,7 @@ beforeEach(() => vi.resetAllMocks())
 describe('Login', () => {
   it('logs in when the form is submitted (Enter key)', async () => {
     api.postForm.mockResolvedValue('Logged')
-    const wrapper = mount(Login)
+    const wrapper = mount(Login, { global: { stubs: ['router-link'] } })
     await wrapper.find('input[name=username]').setValue('alice')
     await wrapper.find('input[name=password]').setValue('secret')
     await wrapper.find('form').trigger('submit')
@@ -41,7 +42,7 @@ describe('Login', () => {
 
   it("doesn't call a server error a wrong password", async () => {
     api.postForm.mockRejectedValue(httpError(503))
-    const wrapper = mount(Login)
+    const wrapper = mount(Login, { global: { stubs: ['router-link'] } })
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Serveur injoignable')
@@ -49,7 +50,7 @@ describe('Login', () => {
 
   it('says when the password is wrong', async () => {
     api.postForm.mockRejectedValue(httpError(401))
-    const wrapper = mount(Login)
+    const wrapper = mount(Login, { global: { stubs: ['router-link'] } })
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Identifiant ou mot de passe incorrect')
@@ -151,5 +152,54 @@ describe('AccountPage', () => {
     await flushPromises()
     expect(api.deleteJson).toHaveBeenCalledWith('account', { password: 'secret123' })
     expect(wrapper.emitted('authenticated')).toEqual([[false]])
+  })
+})
+
+describe('ResetPassword', () => {
+  async function mountReset (query) {
+    const { default: ResetPassword } = await import('@/components/ResetPassword.vue')
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/reset', name: 'reset', component: ResetPassword },
+        { path: '/forgot', name: 'forgot', component: { template: '<p />' } },
+        { path: '/login', name: 'login', component: { template: '<p />' } }
+      ]
+    })
+    router.push({ path: '/reset', query })
+    await router.isReady()
+    const wrapper = mount(ResetPassword, { global: { plugins: [router] } })
+    return { wrapper, router }
+  }
+
+  async function submit (wrapper, password, confirmation = password) {
+    await wrapper.find('input[name=new]').setValue(password)
+    await wrapper.find('input[name=confirm]').setValue(confirmation)
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+  }
+
+  it('sends the token of the link with the new password', async () => {
+    api.postJson.mockResolvedValue(null)
+    const { wrapper, router } = await mountReset({ token: 'abc123' })
+    await submit(wrapper, 'newsecret1', 'other')
+    expect(api.postJson).not.toHaveBeenCalled()
+    await submit(wrapper, 'newsecret1')
+    expect(api.postJson).toHaveBeenCalledWith('password/reset', { token: 'abc123', new: 'newsecret1' })
+    expect(wrapper.text()).toContain('Mot de passe changé')
+    expect(router.currentRoute.value.query.token).toBeUndefined()
+  })
+
+  it('says when the link is no longer valid', async () => {
+    api.postJson.mockRejectedValue(Object.assign(httpError(400), { body: 'invalid or expired link' }))
+    const { wrapper } = await mountReset({ token: 'old' })
+    await submit(wrapper, 'newsecret1')
+    expect(wrapper.text()).toContain('plus valable')
+  })
+
+  it('needs the token', async () => {
+    const { wrapper } = await mountReset({})
+    expect(wrapper.text()).toContain('lien est incomplet')
+    expect(wrapper.find('button').attributes('disabled')).toBeDefined()
   })
 })

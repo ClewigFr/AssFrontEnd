@@ -1,39 +1,49 @@
 <template>
   <div class="apps">
-    <h1>Mes applications</h1>
+    <div class="page-head">
+      <h1>Mes applications</h1>
+      <p class="hint">
+        Chaque application a son UUID, à passer à la librairie Android avec <code>AssConfig(appId = …)</code>.
+      </p>
+    </div>
 
-    <form
-      class="create"
-      @submit.prevent="create"
-    >
-      <input
-        v-model="newName"
-        type="text"
-        name="appName"
-        placeholder="Nom de la nouvelle application"
-        maxlength="255"
+    <section class="card">
+      <form
+        class="inline-form"
+        @submit.prevent="create"
       >
-      <button
-        type="submit"
-        :disabled="!newName.trim() || full"
+        <input
+          v-model="newName"
+          type="text"
+          name="appName"
+          placeholder="Nom de la nouvelle application"
+          maxlength="255"
+        >
+        <button
+          type="submit"
+          :disabled="!newName.trim() || full"
+        >
+          Créer
+        </button>
+      </form>
+      <p
+        v-if="maxApps"
+        class="hint quota"
       >
-        Créer
-      </button>
-    </form>
-    <p
-      v-if="maxApps"
-      class="hint"
-    >
-      {{ apps.length }} / {{ maxApps }} applications<span v-if="full"> : supprimez-en une pour en créer une autre.</span>
-    </p>
-    <p
-      v-if="error"
-      class="error"
-    >
-      {{ error }}
-    </p>
+        {{ apps.length }} / {{ maxApps }} applications<span v-if="full"> : supprimez-en une pour en créer une autre.</span>
+      </p>
+      <p
+        v-if="error"
+        class="error"
+      >
+        {{ error }}
+      </p>
+    </section>
 
-    <p v-if="loaded && apps.length === 0">
+    <p
+      v-if="loaded && apps.length === 0"
+      class="hint empty"
+    >
       Aucune application pour l'instant. Créez-en une pour obtenir l'UUID à configurer dans la librairie.
     </p>
 
@@ -41,12 +51,16 @@
       <li
         v-for="app in apps"
         :key="app.id"
+        class="card"
       >
-        <router-link :to="{ name: 'app', params: { id: app.id } }">
+        <router-link
+          :to="{ name: 'app', params: { id: app.id } }"
+          class="name"
+        >
           {{ app.name }}
         </router-link>
         <span class="count">{{ app.pages }} page{{ app.pages > 1 ? 's' : '' }}</span>
-        <div><CopyId :id="app.id" /></div>
+        <CopyId :id="app.id" />
       </li>
     </ul>
   </div>
@@ -97,13 +111,11 @@ export default {
 </script>
 
 <style scoped>
-.apps { max-width: 640px; margin: 0 auto; }
-.create { margin: 20px 0; }
-.create input { width: 60%; }
-.list { list-style: none; padding: 0; text-align: left; }
-.list li { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
-.list a { font-weight: bold; font-size: 1.1em; }
-.count { color: #888; margin-left: 8px; }
-.hint { color: #666; }
-.error { color: #c0392b; }
+.quota { margin: 0; }
+.empty { text-align: center; padding: 24px 0; }
+.list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.list li { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.name { font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.name:hover { color: var(--primary); }
+.count { color: var(--muted); font-size: 0.9rem; }
 </style>

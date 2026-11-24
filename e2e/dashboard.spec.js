@@ -83,9 +83,9 @@ test('enforces the quotas and alerts on the monthly views', async ({ page }) => 
   })
   await expect(page.getByText(/Ce fichier ajouterait 6 pages/)).toBeVisible()
 
-  await page.getByRole('link', { name: 'Mes applications' }).first().click()
+  await page.getByRole('link', { name: 'Applications', exact: true }).click()
   await createApp(page, 'Deuxième')
-  await page.getByRole('link', { name: 'Mes applications' }).first().click()
+  await page.getByRole('link', { name: 'Applications', exact: true }).click()
   await expect(page.getByText('2 / 2 applications')).toBeVisible()
   await page.getByPlaceholder('Nom de la nouvelle application').fill('Troisième')
   await expect(page.getByRole('button', { name: 'Créer' })).toBeDisabled()
@@ -122,7 +122,7 @@ test('changes the password and deletes the account', async ({ page, browser }) =
   await expect(page.getByText('Mot de passe changé.')).toBeVisible()
 
   // This device stays logged in, the other one is signed out
-  await page.getByRole('link', { name: 'Mes applications' }).first().click()
+  await page.getByRole('link', { name: 'Applications', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Mes applications' })).toBeVisible()
   await other.reload()
   await expect(other.getByRole('heading', { name: 'Connexion' })).toBeVisible()

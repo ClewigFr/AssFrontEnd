@@ -50,7 +50,7 @@ npm run e2e          # end-to-end tests (Playwright), see below
 
 ## End-to-end tests
 
-`e2e/` drives the built dashboard in Chromium against a real backend: login and logout, applications and pages, CSV import and export, stats of views sent like the Android library does, quotas and the monthly alert, password change (other devices signed out) and account deletion. Each test registers its own account.
+`e2e/` drives the built dashboard in Chromium against a real backend: login and logout, forgotten password (the link is read in the backend's logs, so it needs the Docker backend), applications and pages, CSV import and export, stats of views sent like the Android library does, quotas and the monthly alert, password change (other devices signed out) and account deletion. Each test registers its own account.
 
 `npm run e2e` starts everything itself:
 - the backend from its Docker image (`ghcr.io/clewigfr/assbackend:latest`, in-memory database, small quotas) on port 8102, so **Docker must be running**;
@@ -75,10 +75,12 @@ docker build --build-arg BACKEND_URL=https://ass-api.clewig.fr -t ass-dashboard 
 
 ## Project layout
 
+- `src/assets/main.css`: the design tokens (colours, radius, shadows) for light and dark mode, which follow the system setting, and the shared styles (buttons, fields, cards, tables, segmented controls, banners). Components only add their layout, using the tokens (`var(--primary)`…); the stats chart reads them too. Laid out for phones from 375 px wide.
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
 - `src/stats.js`: formatting and derived values for the stats (trends, durations, chart series, table rows), kept free of DOM code so they can be unit tested (`test/stats.test.js`).
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
 - `src/components/AppDetail.vue`: one application, in two tabs (`?tab=stats|config` in the URL). **Statistiques** shows its stats. **Configuration** has its UUID, its pages (add or delete; each page's UUID is what `logScreen` takes; CSV import and export, see below) and the button that deletes it. An application without pages opens on Configuration.
+- `src/components/ForgotPassword.vue` and `ResetPassword.vue`: "Mot de passe oublié ?" from the login page asks for the email, the backend emails a link to `/#/reset?token=…`, valid an hour and usable once, where the new password is chosen. Both pages work logged out (`PUBLIC_ROUTES` in `src/router/index.js`).
 - `src/components/AccountPage.vue`: "Mon compte" (`/#/account`, linked in the top bar). Shows the account's usage against its quotas (applications, pages per application, views this month), changes the password (other devices are signed out) and deletes the account with everything in it, after asking for the password.
 - `src/quota.js`: quota helpers (`test/quota.test.js`). Once the month's views reach the limit, `App.vue` shows an alert on every page; the views are still recorded. Creating an application or a page beyond the limits is disabled, and the backend's `403` is explained.
 - `src/pagesCsv.js`: CSV parsing and writing for the import and export (`test/pagesCsv.test.js`).

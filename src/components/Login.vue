@@ -1,8 +1,16 @@
 <template>
   <form
     id="login"
+    class="auth-card card"
     @submit.prevent="login"
   >
+    <div class="brand">
+      <span
+        class="logo"
+        aria-hidden="true"
+      >A</span>
+      Anonymous Simple Stats
+    </div>
     <h1>Connexion</h1>
     <input
       v-model="input.username"
@@ -32,6 +40,12 @@
     >
       {{ input.error }}
     </p>
+    <router-link
+      :to="{ name: 'forgot' }"
+      class="hint"
+    >
+      Mot de passe oublié ?
+    </router-link>
   </form>
 </template>
 
@@ -74,16 +88,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-#login {
-  max-width: 500px;
-  box-sizing: border-box;
-  border: 1px solid #cccccc;
-  background-color: #ffffff;
-  margin: 200px auto 0;
-  padding: 20px;
-}
-#login input, #login button { margin: 4px; }
-.message { min-height: 1.2em; }
-</style>

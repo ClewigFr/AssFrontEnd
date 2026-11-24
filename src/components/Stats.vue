@@ -2,7 +2,7 @@
   <div class="stats">
     <div class="toolbar">
       <div
-        class="periods"
+        class="segmented"
         role="group"
         aria-label="Période"
       >
@@ -20,6 +20,7 @@
       <div class="navigation">
         <button
           type="button"
+          class="secondary small"
           title="Période précédente"
           @click="move(-1)"
         >
@@ -28,6 +29,7 @@
         <span class="range">{{ rangeLabel }}</span>
         <button
           type="button"
+          class="secondary small"
           title="Période suivante"
           :disabled="offset >= 0"
           @click="move(1)"
@@ -39,7 +41,7 @@
 
     <p
       v-if="error"
-      class="error"
+      class="banner danger"
     >
       {{ error }}
     </p>
@@ -51,7 +53,7 @@
       <div
         v-for="k in cards"
         :key="k.key"
-        class="kpi"
+        class="kpi card"
       >
         <div class="kpi-label">
           {{ k.label }}
@@ -83,60 +85,74 @@
       {{ note }}
     </p>
 
-    <h2>Activité</h2>
-    <div
-      ref="chart"
-      class="chart"
-    />
+    <section class="card">
+      <h2>Activité</h2>
+      <div
+        ref="chart"
+        class="chart"
+      />
+    </section>
 
-    <h2>Pages</h2>
-    <label class="filter">Filtrer : <input
-      v-model="filter"
-      type="search"
-      placeholder="Nom de page"
-    ></label>
-    <table
-      v-if="rows.length"
-      class="pages-table"
-    >
-      <thead>
-        <tr>
-          <th>Page</th>
-          <th>Vues</th>
-          <th>Sessions</th>
-          <th>Part du trafic</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="row in rows"
-          :key="row.id"
+    <section class="card">
+      <div class="section-head">
+        <h2>Pages</h2>
+        <input
+          v-model="filter"
+          type="search"
+          class="filter"
+          aria-label="Filtrer les pages"
+          placeholder="Filtrer"
         >
-          <td>{{ row.name }}</td>
-          <td class="num">
-            {{ formatNumber(row.views) }}
-          </td>
-          <td class="num">
-            {{ noSessions ? '—' : formatNumber(row.sessions) }}
-          </td>
-          <td>
-            <div class="share">
-              <div
-                class="share-bar"
-                :style="{ width: (row.share * 100) + '%' }"
-              />
-              <span>{{ formatPercent(row.share) }}</span>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p
-      v-else-if="stats"
-      class="hint"
-    >
-      Aucune page ne correspond.
-    </p>
+      </div>
+      <div
+        v-if="rows.length"
+        class="table-wrap"
+      >
+        <table class="pages-table">
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th class="num">
+                Vues
+              </th>
+              <th class="num">
+                Sessions
+              </th>
+              <th>Part du trafic</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="row.id"
+            >
+              <td>{{ row.name }}</td>
+              <td class="num">
+                {{ formatNumber(row.views) }}
+              </td>
+              <td class="num">
+                {{ noSessions ? '—' : formatNumber(row.sessions) }}
+              </td>
+              <td>
+                <div class="share">
+                  <div
+                    class="share-bar"
+                    :style="{ width: (row.share * 100) + '%' }"
+                  />
+                  <span>{{ formatPercent(row.share) }}</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        v-else-if="stats"
+        class="hint"
+      >
+        Aucune page ne correspond.
+      </p>
+    </section>
   </div>
 </template>
 
@@ -179,8 +195,13 @@ export default {
   },
   mounted () {
     this.load()
+    // Redraw with the other palette when the system switches between light and dark
+    this.colorScheme = window.matchMedia?.('(prefers-color-scheme: dark)')
+    this.onSchemeChange = () => { if (this.stats) this.drawChart() }
+    this.colorScheme?.addEventListener?.('change', this.onSchemeChange)
   },
   beforeUnmount () {
+    this.colorScheme?.removeEventListener?.('change', this.onSchemeChange)
     if (this.chart) this.chart.destroy()
   },
   methods: {
@@ -225,8 +246,24 @@ export default {
     },
     drawChart () {
       const series = bucketSeries(this.stats)
+      // Colours from the design tokens, so the chart follows the light or dark theme
+      const css = getComputedStyle(this.$refs.chart)
+      const color = name => css.getPropertyValue(name).trim()
       const options = {
-        chart: { type: 'area', height: 300, toolbar: { show: false }, animations: { enabled: false } },
+        chart: {
+          type: 'area',
+          height: 300,
+          toolbar: { show: false },
+          animations: { enabled: false },
+          background: 'transparent',
+          foreColor: color('--muted'),
+          fontFamily: 'inherit'
+        },
+        theme: { mode: this.colorScheme?.matches ? 'dark' : 'light' },
+        colors: [color('--primary'), color('--accent')],
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
+        grid: { borderColor: color('--border'), strokeDashArray: 3 },
+        tooltip: { theme: this.colorScheme?.matches ? 'dark' : 'light' },
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: 2 },
         series: [
@@ -249,34 +286,28 @@ export default {
 </script>
 
 <style scoped>
-.stats { margin-top: 30px; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
-.periods button { border: 1px solid #ccc; background: #fff; padding: 6px 14px; cursor: pointer; }
-.periods button:first-child { border-radius: 6px 0 0 6px; }
-.periods button:last-child { border-radius: 0 6px 6px 0; }
-.periods button + button { border-left: none; }
-.periods button.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .navigation { display: flex; align-items: center; gap: 8px; }
-.navigation button { border: 1px solid #ccc; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
-.navigation button:disabled { opacity: 0.4; cursor: default; }
-.range { min-width: 180px; font-weight: 600; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 20px 0; }
-.kpi { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: left; }
-.kpi-label { color: #6b7280; font-size: 0.85em; }
-.kpi-value { font-size: 1.5em; font-weight: 700; margin: 4px 0; }
-.kpi-delta { font-size: 0.85em; color: #6b7280; }
-.kpi-delta.good { color: #15803d; }
-.kpi-delta.bad { color: #b91c1c; }
-.chart { max-width: 760px; margin: 0 auto; }
-.filter { display: block; margin-bottom: 8px; }
-.pages-table { width: 100%; border-collapse: collapse; text-align: left; }
-.pages-table th, .pages-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
-.pages-table th { color: #6b7280; font-weight: 600; font-size: 0.85em; }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.share { position: relative; background: #f3f4f6; border-radius: 4px; height: 20px; min-width: 120px; }
-.share-bar { position: absolute; inset: 0 auto 0 0; background: #93c5fd; border-radius: 4px; }
-.share span { position: relative; padding-left: 6px; font-size: 0.85em; line-height: 20px; }
-.error { color: #b91c1c; }
-.hint { color: #6b7280; }
-.retention { font-size: 0.9em; max-width: 640px; margin: 8px auto; }
+.range { min-width: 170px; text-align: center; font-weight: 600; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { margin: 0; padding: 14px 16px; }
+.kpi-label { color: var(--muted); font-size: 0.85rem; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.kpi-delta { font-size: 0.82rem; color: var(--muted); }
+.kpi-delta.good { color: var(--success); }
+.kpi-delta.bad { color: var(--danger); }
+.retention { margin: -4px 0 16px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.section-head h2 { margin: 0; }
+.filter { max-width: 220px; }
+.pages-table td:first-child { font-weight: 600; }
+.share { position: relative; background: var(--surface-2); border-radius: 4px; height: 22px; min-width: 120px; }
+.share-bar { position: absolute; inset: 0 auto 0 0; background: var(--primary); opacity: 0.28; border-radius: 4px; }
+.share span { position: relative; padding-left: 8px; font-size: 0.82rem; line-height: 22px; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .navigation { justify-content: space-between; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .kpi-value { font-size: 1.3rem; }
+}
 </style>
