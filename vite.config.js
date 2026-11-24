@@ -23,6 +23,8 @@ export default defineConfig({
     port: Number(process.env.PORT) || 8080
   },
   test: {
-    environment: 'node'
+    environment: 'node',
+    // Playwright's end-to-end tests run with npm run e2e
+    include: ['test/**/*.test.js']
   }
 })

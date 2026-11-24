@@ -45,7 +45,25 @@ npm run build        # production build into dist/
 npm run preview      # preview the production build locally
 npm test             # unit tests (Vitest)
 npm run lint         # ESLint
+npm run e2e          # end-to-end tests (Playwright), see below
 ```
+
+## End-to-end tests
+
+`e2e/` drives the built dashboard in Chromium against a real backend: login and logout, applications and pages, CSV import and export, stats of views sent like the Android library does, quotas and the monthly alert, password change (other devices signed out) and account deletion. Each test registers its own account.
+
+`npm run e2e` starts everything itself:
+- the backend from its Docker image (`ghcr.io/clewigfr/assbackend:latest`, in-memory database, small quotas) on port 8102, so **Docker must be running**;
+- the dashboard, built and served by `vite preview` on port 4173.
+
+The first time, install the browser: `npx playwright install chromium`.
+
+Options:
+- `E2E_BACKEND_IMAGE=ghcr.io/clewigfr/assbackend:<commit>` tests against another backend version;
+- `E2E_BACKEND_URL=http://localhost:8101` uses a backend already running instead (start it with `REGISTRATION_OPEN=true`, `CORS_ORIGINS=http://localhost:4173`, `MAX_APPS=2`, `MAX_PAGES_PER_APP=5` and `MAX_MONTHLY_VIEWS=3`), for example one built from local changes;
+- `npx playwright test --ui` to watch and debug them, `npx playwright show-report` after a failure.
+
+The CI runs them on every push, against the latest backend image. The dashboard image is only published when they pass; on failure, the report and traces are attached to the run (`playwright-report` artifact).
 
 ## Production
 

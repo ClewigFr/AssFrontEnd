@@ -215,6 +215,10 @@ export default {
     setTab (tab) {
       this.$router.replace({ query: { ...this.$route.query, tab } })
     },
+    // The default tab depends on whether there are pages: keep the configuration open while adding the first ones
+    stayOnConfig () {
+      if (!this.$route.query.tab) this.setTab('config')
+    },
     load () {
       if (!this.maxPages) api.get('account').then(account => { this.maxPages = account.quotas.maxPagesPerApp }).catch(() => {})
       return api.get(`apps/${this.id}`)
@@ -225,6 +229,7 @@ export default {
       const name = this.newPage.trim()
       if (!name) return
       this.error = ''
+      this.stayOnConfig()
       try {
         await api.postJson(`apps/${this.id}/pages`, { name })
         this.newPage = ''
@@ -265,6 +270,7 @@ export default {
         return
       }
       this.importing = true
+      this.stayOnConfig()
       try {
         const result = await api.postJson(`apps/${this.id}/pages/batch`, { names })
         const created = result.created.length
