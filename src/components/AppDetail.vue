@@ -18,9 +18,11 @@
       >
         <button
           v-for="t in tabs"
+          :id="'tab-' + t.key"
           :key="t.key"
           type="button"
           role="tab"
+          :aria-controls="'panel-' + t.key"
           :aria-selected="t.key === tab"
           :class="{ active: t.key === tab }"
           @click="setTab(t.key)"
@@ -29,7 +31,12 @@
         </button>
       </div>
 
-      <template v-if="tab === 'stats'">
+      <div
+        v-if="tab === 'stats'"
+        id="panel-stats"
+        role="tabpanel"
+        aria-labelledby="tab-stats"
+      >
         <p
           v-if="pages.length === 0"
           class="hint"
@@ -44,9 +51,14 @@
           :app-id="app.id"
           @authenticated="$emit('authenticated', $event)"
         />
-      </template>
+      </div>
 
-      <template v-else>
+      <div
+        v-else
+        id="panel-config"
+        role="tabpanel"
+        aria-labelledby="tab-config"
+      >
         <p class="hint">
           UUID de l'application, à passer à la librairie (<code>AssConfig(appId = …)</code>) :
         </p>
@@ -139,7 +151,7 @@
             Supprimer l'application
           </button>
         </p>
-      </template>
+      </div>
     </template>
     <p v-else-if="notFound">
       Application introuvable.
@@ -218,7 +230,13 @@ export default {
       if (!file) return
       this.error = ''
       this.importResult = ''
-      const names = pageNamesFromCsv(await file.text())
+      let names
+      try {
+        names = pageNamesFromCsv(await file.text())
+      } catch {
+        this.error = 'Impossible de lire ce fichier.'
+        return
+      }
       if (names.length === 0) {
         this.error = 'Aucun nom de page trouvé : mettez un nom par ligne, dans la première colonne.'
         return

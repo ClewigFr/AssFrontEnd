@@ -3,14 +3,14 @@
     <div class="toolbar">
       <div
         class="periods"
-        role="tablist"
+        role="group"
+        aria-label="Période"
       >
         <button
           v-for="p in periods"
           :key="p.key"
           type="button"
-          role="tab"
-          :aria-selected="p.key === period"
+          :aria-pressed="p.key === period"
           :class="{ active: p.key === period }"
           @click="setPeriod(p.key)"
         >
@@ -154,7 +154,11 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return { periods: PERIODS, period: 'week', offset: 0, stats: null, filter: '', error: '' }
+    // In the URL (?period=month&offset=-2) so a reload or a shared link shows the same period
+    const query = this.$route.query
+    const period = PERIODS.some(p => p.key === query.period) ? query.period : 'week'
+    const offset = Number.parseInt(query.offset, 10)
+    return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, stats: null, filter: '', error: '' }
   },
   computed: {
     cards () {
@@ -185,11 +189,19 @@ export default {
     setPeriod (period) {
       this.period = period
       this.offset = 0
+      this.saveInUrl()
       this.load()
     },
     move (step) {
       this.offset = Math.min(0, this.offset + step)
+      this.saveInUrl()
       this.load()
+    },
+    saveInUrl () {
+      const query = { ...this.$route.query, period: this.period, offset: String(this.offset) }
+      if (this.period === 'week') delete query.period
+      if (this.offset === 0) delete query.offset
+      this.$router.replace({ query })
     },
     // Called on mount and on period changes
     load () {

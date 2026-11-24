@@ -1,4 +1,4 @@
-# Asynchronous Simple Stats front end
+# Anonymous Simple Stats front end
 
 The dashboard for Anonymous Simple Stats: Vue 3, built with Vite and charted with ApexCharts.
 
@@ -13,7 +13,7 @@ Requirements: **Node.js 22.12 or newer** (tested with Node 26 LTS).
    ```bash
    scripts/seed-dev.sh
    ```
-2. Install the dependencies (first time only). This also runs a production build at the end (`postinstall`):
+2. Install the dependencies (first time only):
    ```bash
    npm install
    ```
@@ -33,7 +33,7 @@ Things to know:
 The dashboard calls the AssBackend API. Its base URL is fixed when the app is built or the dev server starts:
 
 - **Dev** (`npm run dev`): `http://localhost:8099` by default.
-- **Prod** (`npm run build`): set `BACKEND_URL=https://your-api.example.com`. If it's not set, the old Heroku host is used.
+- **Prod** (`npm run build`): set `BACKEND_URL=https://your-api.example.com`. If it's not set, `https://ass-api.clewig.fr` is used.
 
 The backend must list this dashboard's origin in its `CORS_ORIGINS` setting, or the browser blocks every request.
 
@@ -43,9 +43,16 @@ The backend must list this dashboard's origin in its `CORS_ORIGINS` setting, or 
 npm run dev          # dev server with hot reload at localhost:8080
 npm run build        # production build into dist/
 npm run preview      # preview the production build locally
-npm start            # serve dist/ with Express (PORT, default 5000), used in production
 npm test             # unit tests (Vitest)
 npm run lint         # ESLint
+```
+
+## Production
+
+The dashboard is a Docker image (nginx serving `dist/`), built and published to GitHub Packages by the CI on every push to master, for arm64 and amd64. `nginx.conf` sets the cache and security headers, including a Content-Security-Policy that only allows calls to the `BACKEND_URL` the image was built with:
+
+```bash
+docker build --build-arg BACKEND_URL=https://ass-api.clewig.fr -t ass-dashboard .
 ```
 
 ## Project layout

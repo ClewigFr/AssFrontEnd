@@ -5,9 +5,16 @@
         v-if="authenticated"
         href="#"
         @click.prevent="logout()"
-      >Logout</a>
+      >Se déconnecter</a>
+      <p
+        v-if="logoutError"
+        class="logout-error"
+        role="alert"
+      >
+        {{ logoutError }}
+      </p>
     </div>
-    <router-view @authenticated="setAuthenticated" />
+    <router-view @authenticated="onAuthenticated" />
   </div>
 </template>
 
@@ -18,18 +25,27 @@ export default {
   name: 'App',
   data () {
     return {
-      authenticated: false
+      authenticated: false,
+      // Set once the user logs in or out: the startup session check must not override it
+      authKnown: false,
+      logoutError: ''
     }
   },
   mounted () {
     // Ask the backend whether the session cookie is still valid
     api.get('login')
-      .then(body => this.setAuthenticated(body === 'Logged'))
-      .catch(() => this.setAuthenticated(false))
+      .then(body => { if (!this.authKnown) this.setAuthenticated(body === 'Logged') })
+      .catch(() => { if (!this.authKnown) this.setAuthenticated(false) })
   },
   methods: {
+    // From the pages (login, or a 401): newer than the startup session check
+    onAuthenticated (status) {
+      this.authKnown = true
+      return this.setAuthenticated(status)
+    },
     async setAuthenticated (status) {
       this.authenticated = status
+      if (!status) this.logoutError = ''
       await this.$router.isReady()
       // Logged out: always go to login. Logged in: leave the login page for the apps list.
       if (!status && this.$route.name !== 'login') {
@@ -39,8 +55,14 @@ export default {
       }
     },
     logout () {
-      api.post('logout')
-        .finally(() => this.setAuthenticated(false))
+      this.logoutError = ''
+      // Only show the user as logged out once the server has really ended the session
+      return api.post('logout')
+        .then(() => this.onAuthenticated(false))
+        .catch(error => {
+          if (error.status === 401) this.onAuthenticated(false)
+          else this.logoutError = 'La déconnexion a échoué, réessayez.'
+        })
     }
   }
 }
@@ -61,5 +83,8 @@ body {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+.logout-error {
+  color: #c0392b;
 }
 </style>
