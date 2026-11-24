@@ -19,3 +19,10 @@ test('offers the dashboard once logged in', async ({ page }) => {
   await page.getByRole('link', { name: 'Ouvrir le dashboard' }).first().click()
   await expect(page.getByRole('heading', { name: 'Mes applications' })).toBeVisible()
 })
+
+test('shows the legal pages with one set of links', async ({ page }) => {
+  await page.goto('/#/privacy')
+  await expect(page.getByRole('heading', { name: 'Politique de confidentialité' })).toBeVisible()
+  await expect(page.getByText('Clewig SARL').first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mentions légales' })).toHaveCount(1)
+})

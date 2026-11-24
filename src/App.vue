@@ -48,7 +48,7 @@
       <router-view @authenticated="onAuthenticated" />
     </main>
     <footer
-      v-if="!isHome"
+      v-if="!isHome && !isLegal"
       class="app-footer"
     >
       <router-link :to="{ name: 'legal' }">
@@ -84,7 +84,9 @@ export default {
   },
   computed: {
     // The public presentation page has its own header
-    isHome () { return this.$route.name === 'home' }
+    isHome () { return this.$route.name === 'home' },
+    // The legal pages end with the same links already
+    isLegal () { return ['legal', 'privacy', 'terms'].includes(this.$route.name) }
   },
   watch: {
     // Refreshed on each page change, so the alert follows the views without polling
