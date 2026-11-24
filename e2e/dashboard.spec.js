@@ -138,3 +138,19 @@ test('changes the password and deletes the account', async ({ page, browser }) =
   await login(page, email, 'new-secret-2')
   await expect(page.getByRole('alert')).toContainText('Identifiant ou mot de passe incorrect')
 })
+
+test('deletes the views of a period', async ({ page }) => {
+  await login(page, await newAccount(page))
+  const app = await createApp(page, 'Nettoyage')
+  await page.getByPlaceholder('Nom de la nouvelle page').fill('Accueil')
+  await page.getByRole('button', { name: 'Ajouter' }).click()
+  const pageId = (await page.getByRole('row', { name: /Accueil/ }).locator('code').textContent()).trim()
+  await sendViews(page, app, pageId, 3)
+
+  // The default period is the last hour: it holds the views just sent (written within a second)
+  page.on('dialog', dialog => dialog.accept())
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Supprimer les vues de cette période' }).click()
+    await expect(page.getByText('3 vues supprimées.')).toBeVisible({ timeout: 1000 })
+  }).toPass({ timeout: 10_000 })
+})

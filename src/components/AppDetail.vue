@@ -184,6 +184,48 @@
           </div>
         </section>
 
+        <section class="card">
+          <h2>Supprimer des vues</h2>
+          <p class="hint">
+            Après un envoi de fausses vues par exemple : supprime toutes les vues reçues pendant la période, dans votre fuseau horaire. Les jours entiers déjà résumés (au-delà de la durée de conservation) sont supprimés aussi.
+          </p>
+          <form
+            class="period"
+            @submit.prevent="deleteViews"
+          >
+            <label>Du
+              <input
+                v-model="purge.from"
+                type="datetime-local"
+                name="purgeFrom"
+                required
+              >
+            </label>
+            <label>au
+              <input
+                v-model="purge.to"
+                type="datetime-local"
+                name="purgeTo"
+                required
+              >
+            </label>
+            <button
+              type="submit"
+              class="danger"
+              :disabled="purging"
+            >
+              Supprimer les vues de cette période
+            </button>
+          </form>
+          <p
+            v-if="purgeResult"
+            class="ok"
+            role="status"
+          >
+            {{ purgeResult }}
+          </p>
+        </section>
+
         <section class="card danger-zone">
           <h2>Zone de danger</h2>
           <p class="hint">
@@ -217,6 +259,7 @@
 <script>
 import { api } from '@/api'
 import CopyId from '@/components/CopyId.vue'
+import { lastHour, periodMs } from '@/period'
 import { isFull, quotaError } from '@/quota'
 import { csvFileName, pageNamesFromCsv, pagesToCsv } from '@/pagesCsv'
 import StatsPage from '@/components/Stats.vue'
@@ -229,7 +272,7 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '', maxPages: 0 }
+    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '', maxPages: 0, purge: lastHour(), purging: false, purgeResult: '' }
   },
   computed: {
     full () { return isFull(this.pages.length, this.maxPages) },
@@ -247,7 +290,7 @@ export default {
   watch: {
     // The same component is reused when going from one application to another
     id () {
-      Object.assign(this, { app: null, pages: [], notFound: false, newPage: '', error: '', importResult: '' })
+      Object.assign(this, { app: null, pages: [], notFound: false, newPage: '', error: '', importResult: '', purgeResult: '' })
       this.load()
     }
   },
@@ -336,6 +379,26 @@ export default {
       // Revoked later: revoking right away can cancel the download in Firefox and Safari
       setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
     },
+    async deleteViews () {
+      this.error = ''
+      this.purgeResult = ''
+      const period = periodMs(this.purge.from, this.purge.to)
+      if (!period) {
+        this.error = 'La fin de la période doit être après son début.'
+        return
+      }
+      const label = `du ${new Date(period.from).toLocaleString('fr-FR')} au ${new Date(period.to).toLocaleString('fr-FR')}`
+      if (!confirm(`Supprimer toutes les vues de « ${this.app.name} » reçues ${label} ? C'est définitif.`)) return
+      this.purging = true
+      try {
+        const { deleted } = await api.delete(`apps/${this.id}/views?from=${period.from}&to=${period.to}`)
+        this.purgeResult = `${deleted} vue${deleted > 1 ? 's' : ''} supprimée${deleted > 1 ? 's' : ''}.`
+      } catch (error) {
+        this.handleError(error)
+      } finally {
+        this.purging = false
+      }
+    },
     async removePage (page) {
       if (!confirm(`Supprimer la page « ${page.name} » et toutes ses vues ? C'est définitif.`)) return
       this.error = ''
@@ -373,6 +436,8 @@ export default {
 .page-name { font-weight: 600; }
 .actions { text-align: right; }
 .danger-zone { border-color: var(--danger-soft); }
+.period { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+.period label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--muted); }
 /* Phones: one block per page (name and delete button, then the UUID) */
 @media (max-width: 600px) {
   .pages thead { display: none; }
