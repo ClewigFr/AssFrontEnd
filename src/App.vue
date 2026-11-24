@@ -9,10 +9,7 @@
           :to="{ name: 'apps' }"
           class="brand"
         >
-          <span
-            class="logo"
-            aria-hidden="true"
-          >A</span>
+          <AssLogo />
           <span class="brand-name">Anonymous Simple Stats</span>
         </router-link>
         <nav id="nav">
@@ -54,12 +51,14 @@
 </template>
 
 <script>
+import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 import { viewsAlert } from '@/quota'
 import { PUBLIC_ROUTES } from '@/router'
 
 export default {
   name: 'App',
+  components: { AssLogo },
   data () {
     return {
       authenticated: false,

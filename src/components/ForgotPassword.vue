@@ -4,10 +4,7 @@
     @submit.prevent="send"
   >
     <div class="brand">
-      <span
-        class="logo"
-        aria-hidden="true"
-      >A</span>
+      <AssLogo />
       Anonymous Simple Stats
     </div>
     <h1>Mot de passe oublié</h1>
@@ -51,10 +48,12 @@
 </template>
 
 <script>
+import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 
 export default {
   name: 'ForgotPassword',
+  components: { AssLogo },
   data () {
     return { email: '', sent: false, loading: false, error: '' }
   },

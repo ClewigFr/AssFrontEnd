@@ -75,6 +75,7 @@ docker build --build-arg BACKEND_URL=https://ass-api.clewig.fr -t ass-dashboard 
 
 ## Project layout
 
+- `src/components/AssLogo.vue` and `public/favicon.svg`: the logo, two rounded bars on meadow green (`#5a9e2f`), the same in light and dark mode. The interface uses a darker green (`--primary`, `#3f7d20`) so white text on buttons stays readable.
 - `src/assets/main.css`: the design tokens (colours, radius, shadows) for light and dark mode, which follow the system setting, and the shared styles (buttons, fields, cards, tables, segmented controls, banners). Components only add their layout, using the tokens (`var(--primary)`…); the stats chart reads them too. Laid out for phones from 375 px wide.
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
 - `src/stats.js`: formatting and derived values for the stats (trends, durations, chart series, table rows), kept free of DOM code so they can be unit tested (`test/stats.test.js`).

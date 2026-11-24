@@ -4,10 +4,7 @@
     @submit.prevent="reset"
   >
     <div class="brand">
-      <span
-        class="logo"
-        aria-hidden="true"
-      >A</span>
+      <AssLogo />
       Anonymous Simple Stats
     </div>
     <h1>Nouveau mot de passe</h1>
@@ -56,10 +53,12 @@
 </template>
 
 <script>
+import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 
 export default {
   name: 'ResetPassword',
+  components: { AssLogo },
   data () {
     return { password: '', confirmation: '', done: false, loading: false, error: '' }
   },

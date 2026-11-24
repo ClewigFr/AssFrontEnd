@@ -5,10 +5,7 @@
     @submit.prevent="login"
   >
     <div class="brand">
-      <span
-        class="logo"
-        aria-hidden="true"
-      >A</span>
+      <AssLogo />
       Anonymous Simple Stats
     </div>
     <h1>Connexion</h1>
@@ -50,10 +47,12 @@
 </template>
 
 <script>
+import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 
 export default {
   name: 'LoginPage',
+  components: { AssLogo },
   emits: ['authenticated'],
   data () {
     return {

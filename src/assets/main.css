@@ -8,11 +8,13 @@
   --border-strong: #cdd2de;
   --text: #1c2233;
   --muted: #5d6579;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-soft: #eef0ff;
+  /* Meadow green, a shade darker than the logo's #5a9e2f so white text on it stays readable */
+  --primary: #3f7d20;
+  --primary-hover: #356b1b;
+  --primary-soft: #e8f3dc;
   --on-primary: #ffffff;
-  --accent: #0d9488;
+  /* Second chart series (sessions): amber, distinct from the green */
+  --accent: #b45309;
   --success: #15803d;
   --danger: #c0262d;
   --danger-soft: #fdecec;
@@ -35,11 +37,11 @@
     --border-strong: #3a4360;
     --text: #e6e9f2;
     --muted: #9aa3b8;
-    --primary: #8b85ff;
-    --primary-hover: #a19cff;
-    --primary-soft: #26264a;
-    --on-primary: #10121c;
-    --accent: #2dd4bf;
+    --primary: #94d46b;
+    --primary-hover: #a8e084;
+    --primary-soft: #223317;
+    --on-primary: #10180b;
+    --accent: #fbbf24;
     --success: #4ade80;
     --danger: #f87171;
     --danger-soft: #3a1f24;
@@ -178,19 +180,6 @@ tbody tr:last-child td { border-bottom: 0; }
 }
 .segmented button:hover:not(:disabled) { background: var(--surface); color: var(--text); }
 .segmented button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
-
-/* The brand mark */
-.logo {
-  display: inline-grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--on-primary);
-  font-weight: 800;
-  flex: none;
-}
 
 /* Login, forgotten password, reset */
 .auth-card {
