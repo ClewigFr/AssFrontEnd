@@ -192,3 +192,6 @@ tbody tr:last-child td { border-bottom: 0; }
 .auth-card h1 { font-size: 1.35rem; }
 .auth-card .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: var(--muted); font-weight: 600; }
 .auth-card .message { min-height: 1.4em; margin: 0; }
+
+/* Sign-up honeypot: off screen rather than display:none, which some bots skip */
+.honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

@@ -73,6 +73,8 @@ The dashboard is a Docker image (nginx serving `dist/`), built and published to 
 docker build --build-arg BACKEND_URL=https://ass-api.clewig.fr -t ass-dashboard .
 ```
 
+The CSP also allows scripts and frames from `https://challenges.cloudflare.com`, for the Cloudflare Turnstile widget of the sign-up page (`src/turnstile.js`). The widget is only loaded when the backend sends a site key (`GET /register/form`, set with `TURNSTILE_SITE_KEY` on the backend); nothing in the dashboard needs configuring.
+
 ## Project layout
 
 - `src/components/AssLogo.vue` and `public/favicon.svg`: the logo, two rounded bars on meadow green (`#5a9e2f`), the same in light and dark mode. The interface uses a darker green (`--primary`, `#3f7d20`) so white text on buttons stays readable.

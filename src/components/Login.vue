@@ -43,6 +43,12 @@
     >
       Mot de passe oublié ?
     </router-link>
+    <router-link
+      :to="{ name: 'register' }"
+      class="hint"
+    >
+      Créer un compte
+    </router-link>
   </form>
 </template>
 
@@ -79,6 +85,7 @@ export default {
         })
         .catch(error => {
           if (error.status === 429) this.input.error = 'Trop de tentatives échouées, réessayez dans 15 minutes.'
+          else if (error.status === 403 && error.body === 'Email not verified') this.input.error = 'Adresse pas encore confirmée : un nouveau lien vient de partir par mail.'
           else if (error.status === 401 || error.status === 403) this.input.error = 'Identifiant ou mot de passe incorrect.'
           else this.input.error = 'Serveur injoignable, réessayez plus tard.'
         })

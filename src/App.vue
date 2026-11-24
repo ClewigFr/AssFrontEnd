@@ -101,7 +101,7 @@ export default {
       // Logged in: leave the login page for the apps list.
       if (!status && !PUBLIC_ROUTES.includes(this.$route.name)) {
         this.$router.replace({ name: 'login' })
-      } else if (status && this.$route.name === 'login') {
+      } else if (status && ['login', 'register', 'verify'].includes(this.$route.name)) {
         this.$router.replace({ name: 'apps' })
       }
     },

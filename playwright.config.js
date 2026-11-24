@@ -14,6 +14,9 @@ const backendEnv = {
   REGISTRATION_OPEN: 'true',
   CORS_ORIGINS: DASHBOARD_URL,
   AUTH_RATE_LIMIT: '0',
+  // The tests register through the API: no form token, no email to open
+  EMAIL_VERIFICATION: 'false',
+  SIGNUP_MIN_SECONDS: '0',
   MAX_APPS: '2',
   MAX_PAGES_PER_APP: '5',
   MAX_MONTHLY_VIEWS: '3'

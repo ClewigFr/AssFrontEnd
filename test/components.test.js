@@ -21,7 +21,8 @@ function makeRouter () {
       { path: '/login', name: 'login', component: Login },
       { path: '/apps', name: 'apps', component: { template: '<p>apps</p>' } },
       { path: '/account', name: 'account', component: { template: '<p>account</p>' } },
-      { path: '/forgot', name: 'forgot', component: { template: '<p>forgot</p>' } }
+      { path: '/forgot', name: 'forgot', component: { template: '<p>forgot</p>' } },
+      { path: '/register', name: 'register', component: { template: '<p>register</p>' } }
     ]
   })
 }
@@ -201,5 +202,37 @@ describe('ResetPassword', () => {
     const { wrapper } = await mountReset({})
     expect(wrapper.text()).toContain('lien est incomplet')
     expect(wrapper.find('button').attributes('disabled')).toBeDefined()
+  })
+})
+
+describe('Register', async () => {
+  const { default: Register } = await import('@/components/Register.vue')
+
+  it('sends the form token and the empty honeypot, then asks to check the email', async () => {
+    api.get.mockResolvedValue({ formToken: 't.sig', emailVerification: true })
+    api.postForm.mockResolvedValue('Check your email')
+    const wrapper = mount(Register, { global: { stubs: ['router-link'] } })
+    await flushPromises()
+    await wrapper.find('input[name=email]').setValue('a@x.io')
+    await wrapper.find('input[name=password]').setValue('secret123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(api.postForm).toHaveBeenCalledWith('register', { email: 'a@x.io', displayName: '', password: 'secret123', website: '', formToken: 't.sig' })
+    expect(wrapper.text()).toContain('lien valable 24 heures')
+    expect(wrapper.emitted('authenticated')).toBeUndefined()
+  })
+
+  it('reloads an expired form', async () => {
+    api.get.mockResolvedValue({ formToken: 'old', emailVerification: true })
+    api.postForm.mockRejectedValue(Object.assign(httpError(400), { body: 'Form expired, reload it' }))
+    const wrapper = mount(Register, { global: { stubs: ['router-link'] } })
+    await flushPromises()
+    await wrapper.find('input[name=email]').setValue('a@x.io')
+    await wrapper.find('input[name=password]').setValue('secret123')
+    api.get.mockResolvedValue({ formToken: 'new', emailVerification: true })
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(api.get).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('expiré')
   })
 })
