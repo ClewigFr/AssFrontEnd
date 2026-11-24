@@ -65,7 +65,9 @@
           <li>Aucun identifiant d'appareil, de publicité ou d'utilisateur. Pas de cookie, pas d'empreinte.</li>
           <li>Une session, c'est un identifiant tiré au hasard à chaque lancement de l'app : impossible de relier deux lancements.</li>
           <li>Les adresses IP ne sont jamais enregistrées. Elles ne servent qu'à limiter les abus, en mémoire.</li>
-          <li>Après 90 jours, le détail des sessions est effacé : il ne reste que le nombre de vues par page et par jour.</li>
+          <li v-if="limits?.retentionDays">
+            Après {{ limits.retentionDays }} jours, le détail des sessions est effacé : il ne reste que le nombre de vues par page et par jour.
+          </li>
         </ul>
         <p class="hint">
           Rien de ce qui est collecté ne permet d'identifier une personne ou de la suivre d'un lancement à l'autre.
@@ -124,15 +126,22 @@ implementation 'com.github.ClewigFr:AssAndroid:{{ version }}'</code></pre>
       </p>
     </section>
 
-    <section class="card limits">
+    <!-- The server's own settings (GET /limits): hidden when they can't be read -->
+    <section
+      v-if="limits"
+      class="card limits"
+    >
       <h2>Gratuit, dans ces limites</h2>
       <div class="limit-grid">
-        <div><strong>5</strong> applications</div>
-        <div><strong>30</strong> pages par application</div>
-        <div><strong>100 000</strong> vues par mois</div>
+        <div><strong>{{ count(limits.maxApps) }}</strong> applications</div>
+        <div><strong>{{ count(limits.maxPagesPerApp) }}</strong> pages par application</div>
+        <div><strong>{{ count(limits.maxMonthlyViews) }}</strong> vues par mois</div>
       </div>
-      <p class="hint">
-        Au-delà de 100 000 vues, le dashboard affiche une alerte, mais les vues continuent d'être comptées.
+      <p
+        v-if="limits.maxMonthlyViews"
+        class="hint"
+      >
+        Au-delà de {{ count(limits.maxMonthlyViews) }} vues, le dashboard affiche une alerte, mais les vues continuent d'être comptées.
       </p>
     </section>
 
@@ -150,19 +159,23 @@ implementation 'com.github.ClewigFr:AssAndroid:{{ version }}'</code></pre>
 <script>
 import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
+import { formatCount } from '@/quota'
 
 export default {
   name: 'HomePage',
   components: { AssLogo },
   data () {
     // Shown in the Gradle snippet; keep in step with the library's latest tag
-    return { logged: false, version: '0.4.0' }
+    return { logged: false, version: '0.4.0', limits: null }
   },
   mounted () {
     // Only changes the buttons: the page itself is public
     api.get('login').then(body => { this.logged = body === 'Logged' }).catch(() => {})
+    api.get('limits').then(limits => { this.limits = limits }).catch(() => {})
   },
   methods: {
+    // 0 means no limit
+    count (n) { return n > 0 ? formatCount(n) : 'Illimité' },
     scrollTo (id) {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     }
