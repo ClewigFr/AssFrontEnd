@@ -307,7 +307,7 @@ export default {
     },
     load () {
       if (!this.maxPages) api.get('account').then(account => { this.maxPages = account.quotas.maxPagesPerApp }).catch(() => {})
-      return api.get(`apps/${this.id}`)
+      return api.get(`apps/${encodeURIComponent(this.id)}`)
         .then(json => { this.app = json.app; this.pages = json.pages; this.notFound = false })
         .catch(this.handleError)
     },
@@ -317,7 +317,7 @@ export default {
       this.error = ''
       this.stayOnConfig()
       try {
-        await api.postJson(`apps/${this.id}/pages`, { name })
+        await api.postJson(`apps/${encodeURIComponent(this.id)}/pages`, { name })
         this.newPage = ''
         await this.load()
       } catch (error) {
@@ -358,7 +358,7 @@ export default {
       this.importing = true
       this.stayOnConfig()
       try {
-        const result = await api.postJson(`apps/${this.id}/pages/batch`, { names })
+        const result = await api.postJson(`apps/${encodeURIComponent(this.id)}/pages/batch`, { names })
         const created = result.created.length
         const existing = result.existing.length
         this.importResult = `${created} page${created > 1 ? 's' : ''} créée${created > 1 ? 's' : ''}` +
@@ -391,7 +391,7 @@ export default {
       if (!confirm(`Supprimer toutes les vues de « ${this.app.name} » reçues ${label} ? C'est définitif.`)) return
       this.purging = true
       try {
-        const { deleted } = await api.delete(`apps/${this.id}/views?from=${period.from}&to=${period.to}`)
+        const { deleted } = await api.delete(`apps/${encodeURIComponent(this.id)}/views?from=${period.from}&to=${period.to}`)
         this.purgeResult = `${deleted} vue${deleted > 1 ? 's' : ''} supprimée${deleted > 1 ? 's' : ''}.`
       } catch (error) {
         this.handleError(error)
@@ -403,7 +403,7 @@ export default {
       if (!confirm(`Supprimer la page « ${page.name} » et toutes ses vues ? C'est définitif.`)) return
       this.error = ''
       try {
-        await api.delete(`apps/${this.id}/pages/${page.id}`)
+        await api.delete(`apps/${encodeURIComponent(this.id)}/pages/${page.id}`)
       } catch (error) {
         // Already gone: just refresh the list
         if (error.status !== 404) return this.handleError(error)
@@ -413,7 +413,7 @@ export default {
     async removeApp () {
       if (!confirm(`Supprimer l'application « ${this.app.name} », ses pages et toutes ses vues ? C'est définitif.`)) return
       try {
-        await api.delete(`apps/${this.id}`)
+        await api.delete(`apps/${encodeURIComponent(this.id)}`)
         this.$router.push({ name: 'apps' })
       } catch (error) {
         this.handleError(error)

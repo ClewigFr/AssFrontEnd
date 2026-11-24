@@ -228,7 +228,7 @@ export default {
     load () {
       const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`
       const requested = query
-      return api.get(`apps/${this.appId}/stats?${query}`)
+      return api.get(`apps/${encodeURIComponent(this.appId)}/stats?${query}`)
         .then(json => {
           if (requested !== `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`) return // a newer request is on its way
           this.error = ''
