@@ -1,7 +1,7 @@
 <template>
   <div class="ass-app">
     <header
-      v-if="authenticated"
+      v-if="authenticated && !isHome"
       class="topbar"
     >
       <div class="topbar-inner">
@@ -36,7 +36,7 @@
         {{ logoutError }}
       </p>
       <p
-        v-if="authenticated && alert"
+        v-if="authenticated && alert && !isHome"
         class="banner warning"
         role="alert"
       >
@@ -67,6 +67,10 @@ export default {
       logoutError: '',
       alert: ''
     }
+  },
+  computed: {
+    // The public presentation page has its own header
+    isHome () { return this.$route.name === 'home' }
   },
   watch: {
     // Refreshed on each page change, so the alert follows the views without polling

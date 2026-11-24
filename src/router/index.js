@@ -3,12 +3,13 @@ import Login from '@/components/Login.vue'
 
 // Hash history keeps URLs like /#/apps working on a plain static file server
 // Pages reachable without being logged in
-export const PUBLIC_ROUTES = ['login', 'register', 'verify', 'forgot', 'reset']
+export const PUBLIC_ROUTES = ['home', 'login', 'register', 'verify', 'forgot', 'reset']
 
 export default createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', redirect: { name: 'login' } },
+    // The public presentation of the service
+    { path: '/', name: 'home', component: () => import('@/components/HomePage.vue') },
     { path: '/login', name: 'login', component: Login },
     { path: '/register', name: 'register', component: () => import('@/components/Register.vue') },
     // Opened from the verification email: /#/verify?token=…
