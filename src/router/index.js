@@ -10,6 +10,7 @@ export default createRouter({
     { path: '/apps', name: 'apps', component: () => import('@/components/AppsPage.vue') },
     // Loaded on demand: keeps ApexCharts out of the login page's bundle
     { path: '/apps/:id', name: 'app', component: () => import('@/components/AppDetail.vue'), props: true },
+    { path: '/account', name: 'account', component: () => import('@/components/AccountPage.vue') },
     // Old dashboard URL
     { path: '/stats', redirect: { name: 'apps' } }
   ]

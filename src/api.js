@@ -26,5 +26,6 @@ export const api = {
   // Form-encoded, as the backend's /login and /register expect
   postForm: (path, fields) => request('POST', path, new URLSearchParams(fields)),
   postJson: (path, data) => request('POST', path, JSON.stringify(data), { 'Content-Type': 'application/json' }),
-  delete: (path) => request('DELETE', path)
+  delete: (path) => request('DELETE', path),
+  deleteJson: (path, data) => request('DELETE', path, JSON.stringify(data), { 'Content-Type': 'application/json' })
 }

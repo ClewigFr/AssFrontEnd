@@ -1,11 +1,19 @@
 <template>
   <div class="ass-app">
     <div id="nav">
-      <a
-        v-if="authenticated"
-        href="#"
-        @click.prevent="logout()"
-      >Se déconnecter</a>
+      <template v-if="authenticated">
+        <router-link :to="{ name: 'apps' }">
+          Mes applications
+        </router-link>
+        <router-link :to="{ name: 'account' }">
+          Mon compte
+        </router-link>
+        <a
+          class="logout"
+          href="#"
+          @click.prevent="logout()"
+        >Se déconnecter</a>
+      </template>
       <p
         v-if="logoutError"
         class="logout-error"
@@ -14,12 +22,23 @@
         {{ logoutError }}
       </p>
     </div>
+    <p
+      v-if="authenticated && alert"
+      class="quota-alert"
+      role="alert"
+    >
+      {{ alert }}
+      <router-link :to="{ name: 'account' }">
+        Détails
+      </router-link>
+    </p>
     <router-view @authenticated="onAuthenticated" />
   </div>
 </template>
 
 <script>
 import { api } from '@/api'
+import { viewsAlert } from '@/quota'
 
 export default {
   name: 'App',
@@ -28,8 +47,13 @@ export default {
       authenticated: false,
       // Set once the user logs in or out: the startup session check must not override it
       authKnown: false,
-      logoutError: ''
+      logoutError: '',
+      alert: ''
     }
+  },
+  watch: {
+    // Refreshed on each page change, so the alert follows the views without polling
+    $route () { this.checkQuota() }
   },
   mounted () {
     // Ask the backend whether the session cookie is still valid
@@ -43,9 +67,18 @@ export default {
       this.authKnown = true
       return this.setAuthenticated(status)
     },
+    async checkQuota () {
+      if (!this.authenticated) { this.alert = ''; return }
+      try {
+        this.alert = viewsAlert(await api.get('account'))
+      } catch {
+        // Not worth an error: the pages report problems themselves
+      }
+    },
     async setAuthenticated (status) {
       this.authenticated = status
       if (!status) this.logoutError = ''
+      this.checkQuota()
       await this.$router.isReady()
       // Logged out: always go to login. Logged in: leave the login page for the apps list.
       if (!status && this.$route.name !== 'login') {
@@ -83,6 +116,17 @@ body {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+#nav a { margin: 0 10px; }
+#nav a.router-link-exact-active { font-weight: bold; }
+.quota-alert {
+  max-width: 720px;
+  margin: 16px auto;
+  padding: 10px 14px;
+  border: 1px solid #e0b252;
+  border-radius: 8px;
+  background: #fff6e0;
+  color: #7a5200;
 }
 .logout-error {
   color: #c0392b;

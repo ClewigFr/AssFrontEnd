@@ -15,11 +15,17 @@
       >
       <button
         type="submit"
-        :disabled="!newName.trim()"
+        :disabled="!newName.trim() || full"
       >
         Créer
       </button>
     </form>
+    <p
+      v-if="maxApps"
+      class="hint"
+    >
+      {{ apps.length }} / {{ maxApps }} applications<span v-if="full"> : supprimez-en une pour en créer une autre.</span>
+    </p>
     <p
       v-if="error"
       class="error"
@@ -49,19 +55,24 @@
 <script>
 import { api } from '@/api'
 import CopyId from '@/components/CopyId.vue'
+import { isFull, quotaError } from '@/quota'
 
 export default {
   name: 'AppsPage',
   components: { CopyId },
   emits: ['authenticated'],
   data () {
-    return { apps: [], loaded: false, newName: '', error: '' }
+    return { apps: [], loaded: false, newName: '', error: '', maxApps: 0 }
+  },
+  computed: {
+    full () { return isFull(this.apps.length, this.maxApps) }
   },
   mounted () {
     this.load()
   },
   methods: {
     load () {
+      api.get('account').then(account => { this.maxApps = account.quotas.maxApps }).catch(() => {})
       return api.get('apps')
         .then(json => { this.apps = json.apps; this.loaded = true })
         .catch(this.handleError)
@@ -79,7 +90,7 @@ export default {
     },
     handleError (error) {
       if (error.status === 401) this.$emit('authenticated', false)
-      else this.error = 'Une erreur est survenue, réessayez.'
+      else this.error = quotaError(error) || 'Une erreur est survenue, réessayez.'
     }
   }
 }
@@ -93,5 +104,6 @@ export default {
 .list li { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
 .list a { font-weight: bold; font-size: 1.1em; }
 .count { color: #888; margin-left: 8px; }
+.hint { color: #666; }
 .error { color: #c0392b; }
 </style>

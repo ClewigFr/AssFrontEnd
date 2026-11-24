@@ -65,6 +65,12 @@
         <CopyId :id="app.id" />
 
         <h2>Pages suivies</h2>
+        <p
+          v-if="maxPages"
+          class="hint"
+        >
+          {{ pages.length }} / {{ maxPages }} pages<span v-if="full"> : supprimez-en une pour en ajouter une autre.</span>
+        </p>
         <form
           class="create"
           @submit.prevent="addPage"
@@ -78,7 +84,7 @@
           >
           <button
             type="submit"
-            :disabled="!newPage.trim()"
+            :disabled="!newPage.trim() || full"
           >
             Ajouter
           </button>
@@ -93,7 +99,7 @@
           >
           <button
             type="button"
-            :disabled="importing"
+            :disabled="importing || full"
             title="Un nom de page par ligne, dans la première colonne"
             @click="$refs.csvFile.click()"
           >
@@ -168,6 +174,7 @@
 <script>
 import { api } from '@/api'
 import CopyId from '@/components/CopyId.vue'
+import { isFull, quotaError } from '@/quota'
 import { csvFileName, pageNamesFromCsv, pagesToCsv } from '@/pagesCsv'
 import StatsPage from '@/components/Stats.vue'
 
@@ -179,9 +186,10 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '' }
+    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '', maxPages: 0 }
   },
   computed: {
+    full () { return isFull(this.pages.length, this.maxPages) },
     tabs () {
       return [{ key: 'stats', label: 'Statistiques' }, { key: 'config', label: 'Configuration' }]
     },
@@ -208,6 +216,7 @@ export default {
       this.$router.replace({ query: { ...this.$route.query, tab } })
     },
     load () {
+      if (!this.maxPages) api.get('account').then(account => { this.maxPages = account.quotas.maxPagesPerApp }).catch(() => {})
       return api.get(`apps/${this.id}`)
         .then(json => { this.app = json.app; this.pages = json.pages; this.notFound = false })
         .catch(this.handleError)
@@ -243,6 +252,12 @@ export default {
       }
       if (names.length > 1000) {
         this.error = `Le fichier contient ${names.length} pages : 1000 au maximum par import.`
+        return
+      }
+      const known = new Set(this.pages.map(page => page.name))
+      const added = new Set(names.filter(name => !known.has(name))).size
+      if (this.maxPages && this.pages.length + added > this.maxPages) {
+        this.error = `Ce fichier ajouterait ${added} pages : ${this.maxPages - this.pages.length} au plus, pour rester à ${this.maxPages} pages par application.`
         return
       }
       if (names.some(name => name.length > 255)) {
@@ -295,7 +310,7 @@ export default {
     handleError (error) {
       if (error.status === 401) this.$emit('authenticated', false)
       else if (error.status === 404) { this.app = null; this.notFound = true }
-      else this.error = 'Une erreur est survenue, réessayez.'
+      else this.error = quotaError(error) || 'Une erreur est survenue, réessayez.'
     }
   }
 }
