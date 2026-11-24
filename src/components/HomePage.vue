@@ -91,7 +91,10 @@
 repositories { maven { url 'https://jitpack.io' } }
 
 // app/build.gradle
-implementation 'com.github.ClewigFr:AssAndroid:{{ version }}'</code></pre>
+implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre>
+          <p class="hint">
+            Avec Jetpack Compose, utilisez plutôt <code>assCompose</code> : il inclut la librairie et ajoute <code>TrackScreen</code>.
+          </p>
         </li>
         <li>
           <h3>Initialisez-la une fois</h3>
@@ -170,7 +173,7 @@ export default {
   components: { AssLogo },
   data () {
     // Shown in the Gradle snippet; keep in step with the library's latest tag
-    return { logged: false, version: '0.4.0', limits: null }
+    return { logged: false, version: '0.5.0', limits: null }
   },
   mounted () {
     // Only changes the buttons: the page itself is public
