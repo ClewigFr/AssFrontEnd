@@ -29,7 +29,7 @@
 
       <h2>Propriété intellectuelle</h2>
       <p>
-        La librairie Android est distribuée sous licence MIT. Le nom, le logo et le contenu de ce site appartiennent à l'éditeur.
+        Les librairies Android et iOS sont distribuées sous licence MIT. Le nom, le logo et le contenu de ce site appartiennent à l'éditeur.
       </p>
     </template>
 
@@ -51,7 +51,7 @@
 
       <h2>Les statistiques des applications</h2>
       <p>
-        La librairie envoie, pour chaque écran affiché : l'identifiant de l'écran (choisi par le développeur),
+        La librairie (Android ou iOS) envoie, pour chaque écran affiché : l'identifiant de l'application et celui de l'écran (choisis par le développeur),
         un identifiant de session tiré au hasard à chaque lancement de l'application, et le moment de l'affichage.
         Elle n'envoie aucun identifiant d'appareil, de publicité ou d'utilisateur, et ne dépose pas de cookie.
         Deux lancements ne peuvent pas être reliés entre eux.
@@ -137,7 +137,7 @@
 
       <h2>Le service</h2>
       <p>
-        Anonymous Simple Stats compte les écrans vus dans des applications Android et les présente dans un dashboard.
+        Anonymous Simple Stats compte les écrans vus dans des applications Android et iOS et les présente dans un dashboard.
         Il est fourni gratuitement, tel quel, sans garantie de disponibilité ni de conservation des données.
       </p>
 
