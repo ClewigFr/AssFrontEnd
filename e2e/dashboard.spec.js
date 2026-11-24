@@ -154,3 +154,35 @@ test('deletes the views of a period', async ({ page }) => {
     await expect(page.getByText('3 vues supprimées.')).toBeVisible({ timeout: 1000 })
   }).toPass({ timeout: 10_000 })
 })
+
+test('shows one page in detail and exports the stats', async ({ page }) => {
+  await login(page, await newAccount(page))
+  const app = await createApp(page, 'Détail')
+  for (const name of ['Accueil', 'Panier']) {
+    await page.getByPlaceholder('Nom de la nouvelle page').fill(name)
+    await page.getByRole('button', { name: 'Ajouter' }).click()
+    await expect(page.getByRole('cell', { name })).toBeVisible()
+  }
+  const idOf = async name => (await page.getByRole('row', { name: new RegExp(name) }).locator('code').textContent()).trim()
+  await sendViews(page, app, await idOf('Accueil'), 3)
+  await sendViews(page, app, await idOf('Panier'), 1)
+
+  await page.getByRole('tab', { name: 'Statistiques' }).click()
+  await expect(async () => {
+    await page.reload()
+    await expect(page.getByRole('row', { name: /Accueil/ }).getByRole('cell').nth(1)).toHaveText('3', { timeout: 1000 })
+  }).toPass({ timeout: 20_000 })
+
+  await page.getByRole('link', { name: 'Accueil' }).click()
+  await expect(page.getByText('Page Accueil seule')).toBeVisible()
+  await expect(page.locator('.kpi').first()).toContainText('3')
+  expect(page.url()).toContain('page=')
+  await page.getByRole('button', { name: 'Toutes les pages' }).click()
+  await expect(page.locator('.kpi').first()).toContainText('4')
+
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'CSV' }).nth(1).click()
+  const csv = (await (await (await download).createReadStream()).toArray()).join('')
+  expect(csv).toContain('page,views,sessions,share')
+  expect(csv).toContain('Accueil,3,1,0.7500')
+})

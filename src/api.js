@@ -25,6 +25,7 @@ export const api = {
   post: (path) => request('POST', path),
   // Form-encoded, as the backend's /login and /register expect
   postForm: (path, fields) => request('POST', path, new URLSearchParams(fields)),
+  patchJson: (path, data) => request('PATCH', path, JSON.stringify(data), { 'Content-Type': 'application/json' }),
   postJson: (path, data) => request('POST', path, JSON.stringify(data), { 'Content-Type': 'application/json' }),
   delete: (path) => request('DELETE', path),
   deleteJson: (path, data) => request('DELETE', path, JSON.stringify(data), { 'Content-Type': 'application/json' })

@@ -39,10 +39,14 @@ function cell (value) {
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
 
+/** CSV text of rows of cells (strings or numbers), with CRLF line ends as Excel expects. */
+export function toCsv (lines) {
+  return lines.map(line => line.map(value => cell(String(value))).join(',')).join('\r\n') + '\r\n'
+}
+
 /** name,id,app_id rows: everything needed to call logScreen for each page. */
 export function pagesToCsv (app, pages) {
-  const lines = [['name', 'id', 'app_id'], ...pages.map(p => [p.name, p.id, app.id])]
-  return lines.map(line => line.map(cell).join(',')).join('\r\n') + '\r\n'
+  return toCsv([['name', 'id', 'app_id'], ...pages.map(p => [p.name, p.id, app.id])])
 }
 
 /** A safe file name for the export, e.g. "mon-app-pages.csv". */

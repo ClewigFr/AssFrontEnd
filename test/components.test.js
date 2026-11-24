@@ -7,7 +7,7 @@ import App from '@/App.vue'
 import Login from '@/components/Login.vue'
 
 vi.mock('@/api', () => ({
-  api: { get: vi.fn(), post: vi.fn(), postForm: vi.fn(), postJson: vi.fn(), delete: vi.fn(), deleteJson: vi.fn() }
+  api: { get: vi.fn(), post: vi.fn(), postForm: vi.fn(), postJson: vi.fn(), patchJson: vi.fn(), delete: vi.fn(), deleteJson: vi.fn() }
 }))
 
 function httpError (status) {
@@ -22,7 +22,8 @@ function makeRouter () {
       { path: '/apps', name: 'apps', component: { template: '<p>apps</p>' } },
       { path: '/account', name: 'account', component: { template: '<p>account</p>' } },
       { path: '/forgot', name: 'forgot', component: { template: '<p>forgot</p>' } },
-      { path: '/register', name: 'register', component: { template: '<p>register</p>' } }
+      { path: '/register', name: 'register', component: { template: '<p>register</p>' } },
+      ...['legal', 'privacy', 'terms'].map(name => ({ path: '/' + name, name, component: { template: '<p />' } }))
     ]
   })
 }
@@ -142,6 +143,14 @@ describe('AccountPage', () => {
     await flushPromises()
     expect(api.postJson).toHaveBeenCalledWith('account/password', { current: 'secret123', new: 'newsecret1' })
     expect(wrapper.text()).toContain('Mot de passe actuel incorrect')
+  })
+
+  it('saves the monthly summary setting', async () => {
+    const wrapper = await mountAccount()
+    api.patchJson.mockResolvedValue(null)
+    await wrapper.find('input[name=monthlyReport]').setValue(true)
+    await flushPromises()
+    expect(api.patchJson).toHaveBeenCalledWith('account', { monthlyReport: true })
   })
 
   it('logs out once the account is deleted', async () => {

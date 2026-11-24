@@ -125,11 +125,31 @@ export function kpis (stats) {
 
 // Chart series
 export function bucketSeries (stats) {
+  const previous = stats.previousBuckets || []
   return {
     categories: stats.buckets.map(b => formatBucket(b.start, stats.granularity)),
     views: stats.buckets.map(b => b.views),
-    sessions: stats.buckets.map(b => b.sessions)
+    sessions: stats.buckets.map(b => b.sessions),
+    // Slot by slot; a period one slot longer (daylight saving) leaves the last one empty
+    previousViews: stats.buckets.map((b, i) => previous[i]?.views ?? null)
   }
+}
+
+/** The chart's slots as CSV rows: start (ISO, UTC), views, sessions, views of the previous period. */
+export function slotsCsvRows (stats) {
+  const previous = stats.previousBuckets || []
+  return [
+    ['start', 'views', 'sessions', 'previous_period_views'],
+    ...stats.buckets.map((b, i) => [new Date(b.start).toISOString(), b.views, b.sessions, previous[i]?.views ?? ''])
+  ]
+}
+
+/** The pages table as CSV rows: page, views, sessions (empty when not kept), share of the views. */
+export function pagesCsvRows (stats, noSessions = false) {
+  return [
+    ['page', 'views', 'sessions', 'share'],
+    ...pageRows(stats.pages, '', stats.current.views).map(p => [p.name, p.views, noSessions ? '' : p.sessions, p.share.toFixed(4)])
+  ]
 }
 
 // Pages table rows: those whose name contains filter, with their share of all views

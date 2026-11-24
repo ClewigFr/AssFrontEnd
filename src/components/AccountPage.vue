@@ -54,6 +54,29 @@
       </section>
 
       <section class="card">
+        <h2>Emails</h2>
+        <label class="toggle">
+          <input
+            type="checkbox"
+            name="monthlyReport"
+            :checked="account.monthlyReport"
+            :disabled="savingReport"
+            @change="setMonthlyReport($event.target.checked)"
+          >
+          Recevoir chaque début de mois un bilan des statistiques de mes applications
+        </label>
+        <p class="hint">
+          Vous recevez aussi un email quand les vues du mois atteignent 80 %, puis 100 % du quota.
+        </p>
+        <p
+          v-if="reportError"
+          class="error"
+        >
+          {{ reportError }}
+        </p>
+      </section>
+
+      <section class="card">
         <h2>Changer le mot de passe</h2>
         <form
           class="stack"
@@ -154,7 +177,9 @@ export default {
       passwordOk: false,
       deletePassword: '',
       deleteError: '',
-      busy: false
+      busy: false,
+      savingReport: false,
+      reportError: ''
     }
   },
   computed: {
@@ -177,6 +202,19 @@ export default {
       } catch (error) {
         if (error.status === 401) this.$emit('authenticated', false)
         else this.error = 'Une erreur est survenue, réessayez.'
+      }
+    },
+    async setMonthlyReport (on) {
+      this.reportError = ''
+      this.savingReport = true
+      try {
+        await api.patchJson('account', { monthlyReport: on })
+        this.account.monthlyReport = on
+      } catch (error) {
+        if (error.status === 401) return this.$emit('authenticated', false)
+        this.reportError = 'Le réglage n\'a pas pu être enregistré, réessayez.'
+      } finally {
+        this.savingReport = false
       }
     },
     async changePassword () {
@@ -232,6 +270,8 @@ export default {
 .stack { max-width: 380px; }
 .stack button { align-self: flex-start; }
 .danger-zone { border-color: var(--danger-soft); }
+.toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin-bottom: 8px; }
+.toggle input { margin-top: 4px; accent-color: var(--primary); }
 @media (max-width: 520px) {
   .usage { grid-template-columns: 1fr; gap: 2px; }
   .usage dd { margin-bottom: 10px; }

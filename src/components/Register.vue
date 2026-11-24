@@ -52,6 +52,16 @@
         v-if="siteKey"
         ref="captcha"
       />
+      <p class="hint terms">
+        En créant un compte, vous acceptez les
+        <router-link :to="{ name: 'terms' }">
+          conditions d'utilisation
+        </router-link>
+        et la
+        <router-link :to="{ name: 'privacy' }">
+          politique de confidentialité
+        </router-link>.
+      </p>
       <button
         type="submit"
         :disabled="loading || !formToken || (siteKey && !captchaToken)"

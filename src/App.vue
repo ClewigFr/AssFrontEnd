@@ -47,6 +47,20 @@
       </p>
       <router-view @authenticated="onAuthenticated" />
     </main>
+    <footer
+      v-if="!isHome"
+      class="app-footer"
+    >
+      <router-link :to="{ name: 'legal' }">
+        Mentions légales
+      </router-link>
+      <router-link :to="{ name: 'privacy' }">
+        Confidentialité
+      </router-link>
+      <router-link :to="{ name: 'terms' }">
+        Conditions d'utilisation
+      </router-link>
+    </footer>
   </div>
 </template>
 
@@ -146,6 +160,8 @@ export default {
 #nav a { color: var(--muted); padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 500; }
 #nav a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
 #nav a.router-link-active { color: var(--text); background: var(--surface-2); }
+.app-footer { max-width: 960px; margin: 0 auto; padding: 0 16px 32px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; }
+.app-footer a { color: var(--muted); }
 .content { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
 @media (max-width: 600px) {
   .brand-name { display: none; }

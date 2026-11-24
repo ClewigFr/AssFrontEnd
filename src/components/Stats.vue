@@ -46,6 +46,20 @@
       {{ error }}
     </p>
 
+    <p
+      v-if="page"
+      class="banner page-filter"
+    >
+      <span>Page <strong>{{ pageName }}</strong> seule : vues, et sessions qui l'ont vue.</span>
+      <button
+        type="button"
+        class="secondary small"
+        @click="selectPage(null)"
+      >
+        Toutes les pages
+      </button>
+    </p>
+
     <div
       v-if="stats"
       class="kpis"
@@ -86,7 +100,18 @@
     </p>
 
     <section class="card">
-      <h2>Activité</h2>
+      <div class="section-head">
+        <h2>Activité</h2>
+        <button
+          type="button"
+          class="secondary small"
+          :disabled="!stats"
+          title="Vues et sessions par créneau, avec la période précédente"
+          @click="exportSlots"
+        >
+          CSV
+        </button>
+      </div>
       <div
         ref="chart"
         class="chart"
@@ -96,6 +121,15 @@
     <section class="card">
       <div class="section-head">
         <h2>Pages</h2>
+        <button
+          type="button"
+          class="secondary small"
+          :disabled="!stats"
+          title="Vues, sessions et part du trafic de chaque page"
+          @click="exportPages"
+        >
+          CSV
+        </button>
         <input
           v-model="filter"
           type="search"
@@ -126,7 +160,14 @@
               v-for="row in rows"
               :key="row.id"
             >
-              <td>{{ row.name }}</td>
+              <td>
+                <a
+                  href="#"
+                  :title="'Voir le détail de ' + row.name"
+                  :aria-current="row.id === page ? 'true' : undefined"
+                  @click.prevent="selectPage(row.id === page ? null : row.id)"
+                >{{ row.name }}</a>
+              </td>
               <td class="num">
                 {{ formatNumber(row.views) }}
               </td>
@@ -159,8 +200,9 @@
 <script>
 import ApexCharts from 'apexcharts'
 import { api } from '@/api'
+import { toCsv } from '@/pagesCsv'
 import {
-  PERIODS, bucketSeries, detailCoverage, detailNote, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
+  PERIODS, bucketSeries, detailCoverage, pagesCsvRows, slotsCsvRows, detailNote, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
 } from '@/stats'
 
 export default {
@@ -174,7 +216,9 @@ export default {
     const query = this.$route.query
     const period = PERIODS.some(p => p.key === query.period) ? query.period : 'week'
     const offset = Number.parseInt(query.offset, 10)
-    return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, stats: null, filter: '', error: '' }
+    // ?page=<id>: the stats of one page
+    const page = typeof query.page === 'string' && /^[0-9a-f-]{36}$/.test(query.page) ? query.page : null
+    return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, page, stats: null, filter: '', error: '' }
   },
   computed: {
     cards () {
@@ -188,6 +232,9 @@ export default {
     },
     noSessions () {
       return this.stats ? detailCoverage(this.stats) === 'none' : false
+    },
+    pageName () {
+      return this.stats?.pages.find(p => p.id === this.page)?.name || ''
     },
     rangeLabel () {
       return this.stats ? formatRange(this.stats.from, this.stats.to, this.stats.period) : ''
@@ -218,19 +265,39 @@ export default {
       this.saveInUrl()
       this.load()
     },
+    selectPage (id) {
+      this.page = id
+      this.saveInUrl()
+      this.load()
+    },
+    download (rows, name) {
+      const blob = new Blob(['\uFEFF' + toCsv(rows)], { type: 'text/csv;charset=utf-8' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `${name}-${this.period}-${new Date(this.stats.from).toISOString().slice(0, 10)}.csv`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
+    },
+    exportSlots () {
+      this.download(slotsCsvRows(this.stats), this.page ? 'activite-page' : 'activite')
+    },
+    exportPages () {
+      this.download(pagesCsvRows(this.stats, this.noSessions), 'pages')
+    },
     saveInUrl () {
-      const query = { ...this.$route.query, period: this.period, offset: String(this.offset) }
+      const query = { ...this.$route.query, period: this.period, offset: String(this.offset), page: this.page }
       if (this.period === 'week') delete query.period
       if (this.offset === 0) delete query.offset
+      if (!this.page) delete query.page
       this.$router.replace({ query })
     },
     // Called on mount and on period changes
     load () {
-      const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`
+      const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}${this.page ? `&page=${this.page}` : ''}`
       const requested = query
       return api.get(`apps/${encodeURIComponent(this.appId)}/stats?${query}`)
         .then(json => {
-          if (requested !== `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}`) return // a newer request is on its way
+          if (requested !== `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}${this.page ? `&page=${this.page}` : ''}`) return // a newer request is on its way
           this.error = ''
           this.stats = json
           this.drawChart()
@@ -260,15 +327,17 @@ export default {
           fontFamily: 'inherit'
         },
         theme: { mode: this.colorScheme?.matches ? 'dark' : 'light' },
-        colors: [color('--primary'), color('--accent')],
-        fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
+        colors: [color('--primary'), color('--accent'), color('--muted')],
+        // The previous period: a dashed line, no area
+        fill: { type: ['gradient', 'gradient', 'solid'], opacity: [1, 1, 0], gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
         grid: { borderColor: color('--border'), strokeDashArray: 3 },
         tooltip: { theme: this.colorScheme?.matches ? 'dark' : 'light' },
         dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: 2 },
+        stroke: { curve: 'smooth', width: [2, 2, 1.5], dashArray: [0, 0, 5] },
         series: [
           { name: 'Pages vues', data: series.views },
-          { name: 'Sessions', data: series.sessions }
+          { name: 'Sessions', data: series.sessions },
+          { name: 'Vues, période précédente', data: series.previousViews }
         ],
         xaxis: { categories: series.categories, tickAmount: Math.min(series.categories.length, 12) },
         yaxis: { min: 0, forceNiceScale: true, labels: { formatter: v => formatNumber(v) } },
@@ -300,6 +369,10 @@ export default {
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .section-head h2 { margin: 0; }
 .filter { max-width: 220px; }
+.section-head h2 { margin-right: auto; }
+.page-filter { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pages-table a { color: var(--text); }
+.pages-table a:hover, .pages-table a[aria-current] { color: var(--primary); }
 .pages-table td:first-child { font-weight: 600; }
 .share { position: relative; background: var(--surface-2); border-radius: 4px; height: 22px; min-width: 120px; }
 .share-bar { position: absolute; inset: 0 auto 0 0; background: var(--primary); opacity: 0.28; border-radius: 4px; }

@@ -151,7 +151,11 @@ implementation 'com.github.ClewigFr:AssAndroid:{{ version }}'</code></pre>
         target="_blank"
         rel="noopener"
       >Code source de la librairie (MIT)</a>
-      <span>Un service Clewig</span>
+      <span class="footer-links">
+        <router-link :to="{ name: 'legal' }">Mentions légales</router-link>
+        <router-link :to="{ name: 'privacy' }">Confidentialité</router-link>
+        <router-link :to="{ name: 'terms' }">Conditions</router-link>
+      </span>
     </footer>
   </div>
 </template>
@@ -239,6 +243,7 @@ pre code { font-size: inherit; }
 .limit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
 .limit-grid div { background: var(--surface-2); border-radius: var(--radius-sm); padding: 14px; color: var(--muted); }
 .limit-grid strong { display: block; font-size: 1.6rem; color: var(--text); }
+.footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
 .home-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 0.9rem; padding: 24px 0 8px; }
 @media (max-width: 520px) {
   .home-nav { margin-bottom: 24px; }

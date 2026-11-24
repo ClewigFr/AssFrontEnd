@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { bucketSeries, delta, pointsDelta, formatDuration, formatPercent, detailCoverage, detailNote, kpis, pageRows, timeZoneOffsetMinutes } from '@/stats'
+import { bucketSeries, delta, pointsDelta, formatDuration, formatPercent, detailCoverage, detailNote, kpis, pageRows, pagesCsvRows, slotsCsvRows, timeZoneOffsetMinutes } from '@/stats'
+import { toCsv } from '@/pagesCsv'
 
 const summary = (o = {}) => ({ views: 0, sessions: 0, pagesPerSession: 0, avgSessionMs: 0, bounceRate: 0, ...o })
 
@@ -64,7 +65,7 @@ describe('bucketSeries', () => {
       granularity: 'hour',
       buckets: [{ start, views: 3, sessions: 1 }, { start: start + 3_600_000, views: 0, sessions: 0 }]
     })
-    expect(series).toEqual({ categories: ['14h', '15h'], views: [3, 0], sessions: [1, 0] })
+    expect(series).toEqual({ categories: ['14h', '15h'], views: [3, 0], sessions: [1, 0], previousViews: [null, null] })
   })
 })
 
@@ -143,5 +144,30 @@ describe('pointsDelta', () => {
     expect(pointsDelta(0.5, 0.4)).toEqual({ label: '+10 pts', trend: 'up' })
     expect(pointsDelta(0.25, 0.5)).toEqual({ label: '-25 pts', trend: 'down' })
     expect(pointsDelta(0.3, 0.3)).toEqual({ label: '=', trend: 'flat' })
+  })
+})
+
+describe('stats exports', () => {
+  const stats = {
+    granularity: 'day',
+    current: { views: 4 },
+    buckets: [{ start: Date.UTC(2026, 10, 1), views: 3, sessions: 2 }, { start: Date.UTC(2026, 10, 2), views: 1, sessions: 1 }],
+    previousBuckets: [{ start: Date.UTC(2026, 9, 30), views: 5, sessions: 4 }],
+    pages: [{ id: 'a', name: 'Accueil', views: 3, sessions: 2 }, { id: 'b', name: 'Panier, étape 1', views: 1, sessions: 1 }]
+  }
+
+  it('lines the previous period up slot by slot', () => {
+    expect(bucketSeries(stats).previousViews).toEqual([5, null])
+  })
+
+  it('exports the slots and the pages', () => {
+    expect(slotsCsvRows(stats)).toEqual([
+      ['start', 'views', 'sessions', 'previous_period_views'],
+      ['2026-11-01T00:00:00.000Z', 3, 2, 5],
+      ['2026-11-02T00:00:00.000Z', 1, 1, '']
+    ])
+    expect(pagesCsvRows(stats)[1]).toEqual(['Accueil', 3, 2, '0.7500'])
+    expect(pagesCsvRows(stats, true)[2]).toEqual(['Panier, étape 1', 1, '', '0.2500'])
+    expect(toCsv(pagesCsvRows(stats))).toContain('"Panier, étape 1",1,1,0.2500\r\n')
   })
 })
