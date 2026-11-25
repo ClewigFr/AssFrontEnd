@@ -48,16 +48,25 @@
       <router-view @authenticated="onAuthenticated" />
     </main>
     <footer
-      v-if="!isHome && !isLegal"
+      v-if="!isHome && !isLegal && legal.pages.length"
       class="app-footer"
     >
-      <router-link :to="{ name: 'legal' }">
+      <router-link
+        v-if="legal.pages.includes('legal')"
+        :to="{ name: 'legal' }"
+      >
         Mentions légales
       </router-link>
-      <router-link :to="{ name: 'privacy' }">
+      <router-link
+        v-if="legal.pages.includes('privacy')"
+        :to="{ name: 'privacy' }"
+      >
         Confidentialité
       </router-link>
-      <router-link :to="{ name: 'terms' }">
+      <router-link
+        v-if="legal.pages.includes('terms')"
+        :to="{ name: 'terms' }"
+      >
         Conditions d'utilisation
       </router-link>
     </footer>
@@ -67,6 +76,7 @@
 <script>
 import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
+import { legal } from '@/legal'
 import { viewsAlert } from '@/quota'
 import { PUBLIC_ROUTES } from '@/router'
 
@@ -79,7 +89,8 @@ export default {
       // Set once the user logs in or out: the startup session check must not override it
       authKnown: false,
       logoutError: '',
-      alert: ''
+      alert: '',
+      legal
     }
   },
   computed: {

@@ -20,9 +20,23 @@ test('offers the dashboard once logged in', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Mes applications' })).toBeVisible()
 })
 
-test('shows the legal pages with one set of links', async ({ page }) => {
+test('shows the legal pages of the instance with one set of links', async ({ page }) => {
+  // The instance's own texts (public/legal/) are not in git: serve two pages here
+  await page.route('**/legal/pages.json', route => route.fulfill({ json: ['legal', 'privacy'] }))
+  await page.route('**/legal/privacy.html', route => route.fulfill({
+    contentType: 'text/html', body: '<h1>Politique de confidentialité</h1><p>Conservé {{retention}}.</p>'
+  }))
   await page.goto('/#/privacy')
   await expect(page.getByRole('heading', { name: 'Politique de confidentialité' })).toBeVisible()
-  await expect(page.getByText('Clewig SARL').first()).toBeVisible()
+  await expect(page.getByText(/Conservé \d+ jours/)).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mentions légales' })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: "Conditions d'utilisation" })).toHaveCount(0)
+})
+
+test('hides the legal links when the instance publishes none', async ({ page }) => {
+  await page.route('**/legal/pages.json', route => route.fulfill({ status: 404 }))
+  await page.goto('/#/register')
+  await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mentions légales' })).toHaveCount(0)
+  await expect(page.getByText('En créant un compte')).toHaveCount(0)
 })

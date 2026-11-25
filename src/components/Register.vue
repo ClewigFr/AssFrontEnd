@@ -52,15 +52,26 @@
         v-if="siteKey"
         ref="captcha"
       />
-      <p class="hint terms">
-        En créant un compte, vous acceptez les
-        <router-link :to="{ name: 'terms' }">
-          conditions d'utilisation
-        </router-link>
-        et la
-        <router-link :to="{ name: 'privacy' }">
-          politique de confidentialité
-        </router-link>.
+      <p
+        v-if="legal.pages.includes('terms') || legal.pages.includes('privacy')"
+        class="hint terms"
+      >
+        En créant un compte, vous acceptez
+        <template v-if="legal.pages.includes('terms')">
+          les
+          <router-link :to="{ name: 'terms' }">
+            conditions d'utilisation
+          </router-link>
+        </template>
+        <template v-if="legal.pages.includes('terms') && legal.pages.includes('privacy')">
+          et
+        </template>
+        <template v-if="legal.pages.includes('privacy')">
+          la
+          <router-link :to="{ name: 'privacy' }">
+            politique de confidentialité
+          </router-link>
+        </template>
       </p>
       <button
         type="submit"
@@ -91,6 +102,7 @@
 <script>
 import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
+import { legal } from '@/legal'
 import { renderTurnstile, resetTurnstile } from '@/turnstile'
 
 export default {
@@ -99,7 +111,7 @@ export default {
   emits: ['authenticated'],
   data () {
     return {
-      email: '', displayName: '', password: '', website: '',
+      legal, email: '', displayName: '', password: '', website: '',
       formToken: '', siteKey: null, captchaToken: '', widget: null,
       sent: false, loading: false, error: ''
     }

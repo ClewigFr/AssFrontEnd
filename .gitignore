@@ -16,3 +16,6 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.code-workspace
+
+# Legal pages of this instance (copied from legal.example/, they name the operator)
+/public/legal/

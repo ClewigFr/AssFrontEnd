@@ -155,9 +155,18 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
         rel="noopener"
       >Code source de la librairie (MIT)</a>
       <span class="footer-links">
-        <router-link :to="{ name: 'legal' }">Mentions légales</router-link>
-        <router-link :to="{ name: 'privacy' }">Confidentialité</router-link>
-        <router-link :to="{ name: 'terms' }">Conditions</router-link>
+        <router-link
+          v-if="legal.pages.includes('legal')"
+          :to="{ name: 'legal' }"
+        >Mentions légales</router-link>
+        <router-link
+          v-if="legal.pages.includes('privacy')"
+          :to="{ name: 'privacy' }"
+        >Confidentialité</router-link>
+        <router-link
+          v-if="legal.pages.includes('terms')"
+          :to="{ name: 'terms' }"
+        >Conditions</router-link>
       </span>
     </footer>
   </div>
@@ -167,13 +176,14 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
 import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 import { formatCount } from '@/quota'
+import { legal } from '@/legal'
 
 export default {
   name: 'HomePage',
   components: { AssLogo },
   data () {
     // Shown in the Gradle snippet; keep in step with the library's latest tag
-    return { logged: false, version: '0.5.0', limits: null }
+    return { logged: false, version: '0.5.0', limits: null, legal }
   },
   mounted () {
     // Only changes the buttons: the page itself is public

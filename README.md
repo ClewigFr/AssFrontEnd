@@ -85,7 +85,7 @@ The CSP also allows scripts and frames from `https://challenges.cloudflare.com`,
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
 - `src/components/AppDetail.vue`: one application, in two tabs (`?tab=stats|config` in the URL). **Statistiques** shows its stats. **Configuration** has its UUID, its pages (add or delete; each page's UUID is what `logScreen` takes; CSV import and export, see below) and the button that deletes it. An application without pages opens on Configuration.
 - `src/components/ForgotPassword.vue` and `ResetPassword.vue`: "Mot de passe oublié ?" from the login page asks for the email, the backend emails a link to `/#/reset?token=…`, valid an hour and usable once, where the new password is chosen. Both pages work logged out (`PUBLIC_ROUTES` in `src/router/index.js`).
-- `src/components/LegalPage.vue`: the legal notice, privacy policy and terms (`/#/legal`, `/#/privacy`, `/#/terms`), linked from the home page, the sign-up form and the footer. Publisher: Clewig SARL; update the date at the top of a page when its content changes. The figures (limits, retention) come from `GET /limits`.
+- `src/components/LegalPage.vue` and `src/legal.js`: the legal notice, privacy policy and terms (`/#/legal`, `/#/privacy`, `/#/terms`), linked from the home page, the sign-up form and the footer. Their text belongs to each instance, see [Legal pages](#legal-pages).
 - `src/components/AccountPage.vue`: "Mon compte" (`/#/account`, linked in the top bar). Shows the account's usage against its quotas (applications, pages per application, views this month), opts in or out of the monthly summary email, changes the password (other devices are signed out) and deletes the account with everything in it, after asking for the password.
 - `src/quota.js`: quota helpers (`test/quota.test.js`). Once the month's views reach the limit, `App.vue` shows an alert on every page; the views are still recorded. Creating an application or a page beyond the limits is disabled, and the backend's `403` is explained.
 - "Supprimer des vues" in the Configuration tab deletes the views received during a period (the last hour by default, in the viewer's time zone), after a flood of fake views. `src/period.js` converts the inputs (`test/period.test.js`).
@@ -93,6 +93,19 @@ The CSP also allows scripts and frames from `https://challenges.cloudflare.com`,
 - Stats: a click on a page shows its own stats (`?page=<id>`); the chart has the previous period as a dashed line; **CSV** buttons export the slots and the pages table (`slotsCsvRows`, `pagesCsvRows` in `src/stats.js`).
 - `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page. For periods older than the backend's retention (90 days by default), only views are kept: session figures show `—` or cover only the recent part, and a note explains it (`detailFrom` in the stats response).
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.
+
+## Legal pages
+
+The legal notice, privacy policy and terms name whoever runs the instance, so their text is not in the code. Each instance publishes its own, served next to the dashboard:
+
+- `public/legal/pages.json`: the pages published, e.g. `["legal", "privacy", "terms"]`
+- `public/legal/<page>.html`: the content of each page, an HTML fragment (headings, paragraphs, lists, tables; links to the dashboard as `#/account`)
+
+`public/legal/` is ignored by git. Start from the templates: `cp -r legal.example public/legal`, then replace every `[champ]` and reread the whole text (host, subprocessors, backups, applicable law) so it describes **your** instance. `{{retention}}` and `{{limits}}` are replaced with the figures from `GET /limits`. Update the date at the top of a page when its content changes.
+
+Without `pages.json` the pages and every link to them are hidden, so an instance never shows someone else's legal notice. An instance open to the public in France or the EU must publish them. The templates are examples, not legal advice: each operator is responsible for their own texts.
+
+With Docker, either build with `public/legal/` in place (it is copied into the image), or mount it at run time: `-v ./legal:/usr/share/nginx/html/legal:ro`.
 
 ## Importing and exporting pages (CSV)
 
