@@ -3,7 +3,7 @@
     <div class="page-head">
       <h1>Mes applications</h1>
       <p class="hint">
-        Chaque application a son UUID, à passer à la librairie Android avec <code>AssConfig(appId = …)</code>.
+        Chaque application a son UUID, à passer à la librairie Android ou iOS avec <code>AssConfig(appId = …)</code>.
       </p>
     </div>
 

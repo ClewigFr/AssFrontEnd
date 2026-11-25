@@ -5,8 +5,10 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { api } from '@/api'
 import App from '@/App.vue'
 import Login from '@/components/Login.vue'
+import HomePage from '@/components/HomePage.vue'
 
 vi.mock('@/api', () => ({
+  BACKEND_URL: 'https://api.example.com',
   api: { get: vi.fn(), post: vi.fn(), postForm: vi.fn(), postJson: vi.fn(), patchJson: vi.fn(), delete: vi.fn(), deleteJson: vi.fn() }
 }))
 
@@ -243,5 +245,23 @@ describe('Register', async () => {
     await flushPromises()
     expect(api.get).toHaveBeenCalledTimes(2)
     expect(wrapper.text()).toContain('expiré')
+  })
+})
+
+describe('HomePage', () => {
+  it('shows the Android integration first, then iOS on demand', async () => {
+    api.get.mockRejectedValue(httpError(401))
+    const wrapper = mount(HomePage, { global: { stubs: ['router-link'] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('com.github.ClewigFr.AssAndroid:assLib:0.5.0')
+    expect(wrapper.find('.ai a').attributes('href')).toContain('AssAndroid')
+
+    const ios = wrapper.findAll('[role=tab]').find(tab => tab.text() === 'iOS')
+    await ios.trigger('click')
+    expect(ios.attributes('aria-selected')).toBe('true')
+    expect(wrapper.text()).toContain('https://github.com/ClewigFr/AssIOS')
+    expect(wrapper.text()).toContain('.trackScreen(stats, "<UUID de la page>")')
+    expect(wrapper.text()).not.toContain('assLib')
+    expect(wrapper.find('.ai a').attributes('href')).toBe('https://github.com/ClewigFr/AssIOS/blob/master/AI_INTEGRATION.md')
   })
 })

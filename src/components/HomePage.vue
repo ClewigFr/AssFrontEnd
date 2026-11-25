@@ -29,7 +29,7 @@
 
     <section class="hero">
       <AssLogo :size="88" />
-      <h1>Des statistiques d'écrans pour Android, anonymes par conception.</h1>
+      <h1>Des statistiques d'écrans pour Android et iOS, anonymes par conception.</h1>
       <p class="lead">
         Une petite librairie pour savoir quels écrans de votre app sont vus, combien de temps durent les sessions et d'où partent vos utilisateurs. Sans jamais savoir qui ils sont.
       </p>
@@ -55,7 +55,8 @@
           <li>Elle compte les vues de chaque écran que vous déclarez, un appel <code>logScreen</code> par écran.</li>
           <li>Le dashboard montre les vues, les sessions, les pages par session, la durée moyenne et le taux de rebond, par jour, semaine, mois ou année.</li>
           <li>Les vues partent par lots, en arrière-plan. Hors ligne, elles sont gardées et renvoyées plus tard.</li>
-          <li>Aucune dépendance en dehors de Kotlin, une seule permission (<code>INTERNET</code>), Android 4.1 et plus.</li>
+          <li>Android : aucune dépendance en dehors de Kotlin, une seule permission (<code>INTERNET</code>), Android 4.1 et plus.</li>
+          <li>iOS : un Swift package sans dépendance, iOS 15 et plus, avec son manifeste de confidentialité.</li>
         </ul>
       </article>
 
@@ -80,12 +81,37 @@
       class="card integration"
     >
       <h2>L'intégrer en quatre étapes</h2>
+      <div
+        class="platforms"
+        role="tablist"
+        aria-label="Plateforme"
+      >
+        <button
+          v-for="p in platforms"
+          :key="p.id"
+          type="button"
+          role="tab"
+          :aria-selected="platform === p.id"
+          :class="{ active: platform === p.id }"
+          @click="platform = p.id"
+        >
+          {{ p.label }}
+        </button>
+      </div>
       <ol class="steps">
         <li>
           <h3>Créez votre application</h3>
           <p>Dans le dashboard, créez une application et ajoutez une page par écran à suivre, à la main ou en important un CSV. Chacune reçoit son identifiant.</p>
         </li>
-        <li>
+        <li v-if="platform === 'ios'">
+          <h3>Ajoutez le package</h3>
+          <pre><code>// Xcode : File › Add Package Dependencies…
+https://github.com/ClewigFr/AssIOS  // à partir de {{ version }}</code></pre>
+          <p class="hint">
+            Avec SwiftUI, <code>.trackScreen</code> compte l'écran à chaque affichage et à chaque retour au premier plan.
+          </p>
+        </li>
+        <li v-else>
           <h3>Ajoutez la dépendance</h3>
           <pre><code>// settings.gradle
 repositories { maven { url 'https://jitpack.io' } }
@@ -96,7 +122,16 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
             Avec Jetpack Compose, utilisez plutôt <code>assCompose</code> : il inclut la librairie et ajoute <code>TrackScreen</code>.
           </p>
         </li>
-        <li>
+        <li v-if="platform === 'ios'">
+          <h3>Initialisez-le une fois</h3>
+          <pre><code>import AnonymousSimpleStats
+
+let stats = AnonymousSimpleStatsManager.getInstance(AssConfig(
+    endpoint: "{{ endpoint }}",
+    appId: "&lt;UUID de l'application&gt;"
+))</code></pre>
+        </li>
+        <li v-else>
           <h3>Initialisez-la une fois</h3>
           <pre><code>class MyApplication : Application() {
     override fun onCreate() {
@@ -110,7 +145,18 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
         </li>
         <li>
           <h3>Comptez chaque écran</h3>
-          <pre><code>override fun onResume() {
+          <pre v-if="platform === 'ios'"><code>// SwiftUI
+var body: some View {
+    CartContent()
+        .trackScreen(stats, "&lt;UUID de la page&gt;")
+}
+
+// UIKit
+override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    stats.logScreen("&lt;UUID de la page&gt;")
+}</code></pre>
+          <pre v-else><code>override fun onResume() {
     super.onResume()
     AnonymousSimpleStatsManager.getInstance(this, config)
         .logScreen("&lt;UUID de la page&gt;")
@@ -122,7 +168,7 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
       </ol>
       <p class="ai">
         Beaucoup d'écrans ? Le guide <a
-          href="https://github.com/ClewigFr/AssAndroid/blob/master/AI_INTEGRATION.md"
+          :href="`${repo}/blob/master/AI_INTEGRATION.md`"
           target="_blank"
           rel="noopener"
         >AI_INTEGRATION.md</a> permet à un assistant IA de lister les écrans de votre app, puis d'ajouter tous les appels à partir de l'export CSV du dashboard.
@@ -149,11 +195,19 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
     </section>
 
     <footer class="home-footer">
-      <a
-        href="https://github.com/ClewigFr/AssAndroid"
-        target="_blank"
-        rel="noopener"
-      >Code source de la librairie (MIT)</a>
+      <span>
+        Code source (MIT) :
+        <a
+          href="https://github.com/ClewigFr/AssAndroid"
+          target="_blank"
+          rel="noopener"
+        >Android</a>,
+        <a
+          href="https://github.com/ClewigFr/AssIOS"
+          target="_blank"
+          rel="noopener"
+        >iOS</a>
+      </span>
       <span class="footer-links">
         <router-link
           v-if="legal.pages.includes('legal')"
@@ -182,8 +236,23 @@ export default {
   name: 'HomePage',
   components: { AssLogo },
   data () {
-    // Shown in the Gradle snippet; keep in step with the library's latest tag
-    return { logged: false, version: '0.5.0', limits: null, legal, endpoint: BACKEND_URL }
+    // Shown in the Gradle and Swift package snippets; the Android and iOS libraries share their
+    // version numbers: keep in step with their latest tag
+    return {
+      logged: false,
+      version: '0.5.0',
+      limits: null,
+      platform: 'android',
+      platforms: [{ id: 'android', label: 'Android' }, { id: 'ios', label: 'iOS' }],
+      legal,
+      // The API of this instance, for the AssConfig snippets
+      endpoint: BACKEND_URL
+    }
+  },
+  computed: {
+    repo () {
+      return this.platform === 'ios' ? 'https://github.com/ClewigFr/AssIOS' : 'https://github.com/ClewigFr/AssAndroid'
+    }
   },
   mounted () {
     // Only changes the buttons: the page itself is public
@@ -225,6 +294,9 @@ export default {
 .features ul { padding-left: 20px; margin: 0 0 12px; }
 .features li { margin-bottom: 8px; }
 .integration h3 { font-size: 1rem; margin: 0 0 6px; }
+.platforms { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 20px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.platforms button { background: transparent; color: var(--muted); border: 0; padding: 6px 16px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
+.platforms button.active { background: var(--primary); color: var(--on-primary); }
 .steps { list-style: none; padding: 0; margin: 0; counter-reset: step; display: grid; gap: 20px; }
 .steps li { counter-increment: step; position: relative; padding-left: 44px; min-width: 0; }
 .steps li::before {
