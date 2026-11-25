@@ -30,7 +30,7 @@
         v-if="maxApps"
         class="hint quota"
       >
-        {{ apps.length }} / {{ maxApps }} applications<span v-if="full"> : supprimez-en une pour en créer une autre.</span>
+        {{ ownedCount }} / {{ maxApps }} applications<span v-if="full"> : supprimez-en une pour en créer une autre.</span>
       </p>
       <p
         v-if="error"
@@ -59,6 +59,11 @@
         >
           {{ app.name }}
         </router-link>
+        <span
+          v-if="isShared(app)"
+          class="badge"
+          :title="'Partagée par ' + app.owner"
+        >Partagée · {{ ROLE_LABELS[app.role] }}</span>
         <span class="count">{{ app.pages }} page{{ app.pages > 1 ? 's' : '' }}</span>
         <CopyId :id="app.id" />
       </li>
@@ -70,6 +75,7 @@
 import { api } from '@/api'
 import CopyId from '@/components/CopyId.vue'
 import { isFull, quotaError } from '@/quota'
+import { isShared, ROLE_LABELS } from '@/roles'
 
 export default {
   name: 'AppsPage',
@@ -79,12 +85,16 @@ export default {
     return { apps: [], loaded: false, newName: '', error: '', maxApps: 0 }
   },
   computed: {
-    full () { return isFull(this.apps.length, this.maxApps) }
+    // Shared applications count for their owner's quota, not this account's
+    ownedCount () { return this.apps.filter(app => !isShared(app)).length },
+    full () { return isFull(this.ownedCount, this.maxApps) },
+    ROLE_LABELS: () => ROLE_LABELS
   },
   mounted () {
     this.load()
   },
   methods: {
+    isShared,
     load () {
       api.get('account').then(account => { this.maxApps = account.quotas.maxApps }).catch(() => {})
       return api.get('apps')
@@ -117,5 +127,6 @@ export default {
 .list li { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .name { font-weight: 700; font-size: 1.1rem; color: var(--text); }
 .name:hover { color: var(--primary); }
+.badge { align-self: flex-start; font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--primary-soft, rgba(0, 0, 0, 0.06)); color: var(--primary); }
 .count { color: var(--muted); font-size: 0.9rem; }
 </style>

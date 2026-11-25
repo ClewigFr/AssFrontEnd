@@ -11,7 +11,13 @@
         v-if="app"
         class="title-row"
       >
-        <h1>{{ app.name }}</h1>
+        <h1>
+          {{ app.name }}
+          <span
+            v-if="shared"
+            class="badge"
+          >Partagée · {{ roleLabel }}</span>
+        </h1>
         <div
           class="segmented"
           role="tablist"
@@ -51,11 +57,13 @@
           v-if="pages.length === 0"
           class="banner"
         >
-          Aucune page suivie pour l'instant : ajoutez-en dans l'onglet
-          <a
-            href="#"
-            @click.prevent="setTab('config')"
-          >Configuration</a>.
+          Aucune page suivie pour l'instant<template v-if="canManage">
+            : ajoutez-en dans l'onglet
+            <a
+              href="#"
+              @click.prevent="setTab('config')"
+            >Configuration</a>
+          </template>.
         </p>
         <StatsPage
           :app-id="app.id"
@@ -86,6 +94,7 @@
             >{{ pages.length }} / {{ maxPages }} pages</span>
           </div>
           <form
+            v-if="canManage"
             class="inline-form"
             @submit.prevent="addPage"
           >
@@ -104,7 +113,7 @@
             </button>
           </form>
           <p
-            v-if="full"
+            v-if="canManage && full"
             class="hint"
           >
             Limite atteinte : supprimez une page pour en ajouter une autre.
@@ -118,6 +127,7 @@
               @change="importCsv"
             >
             <button
+              v-if="canManage"
               type="button"
               class="secondary"
               :disabled="importing || full"
@@ -157,7 +167,7 @@
                 <tr>
                   <th>Page</th>
                   <th>UUID, pour <code>logScreen</code></th>
-                  <th />
+                  <th v-if="canManage" />
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +179,10 @@
                     {{ page.name }}
                   </td>
                   <td><CopyId :id="page.id" /></td>
-                  <td class="actions">
+                  <td
+                    v-if="canManage"
+                    class="actions"
+                  >
                     <button
                       type="button"
                       class="danger small"
@@ -184,7 +197,10 @@
           </div>
         </section>
 
-        <section class="card">
+        <section
+          v-if="canManage"
+          class="card"
+        >
           <h2>Supprimer des vues</h2>
           <p class="hint">
             Après un envoi de fausses vues par exemple : supprime toutes les vues reçues pendant la période, dans votre fuseau horaire. Les jours entiers déjà résumés (au-delà de la durée de conservation) sont supprimés aussi.
@@ -226,7 +242,100 @@
           </p>
         </section>
 
-        <section class="card danger-zone">
+        <section
+          v-if="isOwner"
+          class="card"
+        >
+          <h2>Partage</h2>
+          <p class="hint">
+            Donnez accès à un autre compte, par son email. Lecture : voir les statistiques. Gestion : aussi gérer les pages et supprimer des vues. Supprimer l'application et la partager restent réservés au propriétaire ; elle compte dans vos quotas.
+          </p>
+          <form
+            class="inline-form"
+            @submit.prevent="share"
+          >
+            <input
+              v-model="newMember.email"
+              type="email"
+              name="memberEmail"
+              placeholder="Email du compte"
+              maxlength="128"
+              required
+            >
+            <select
+              v-model="newMember.role"
+              name="memberRole"
+              aria-label="Rôle"
+            >
+              <option value="read">
+                Lecture
+              </option>
+              <option value="manage">
+                Gestion
+              </option>
+            </select>
+            <button
+              type="submit"
+              :disabled="!newMember.email.trim() || sharing"
+            >
+              Partager
+            </button>
+          </form>
+          <p
+            v-if="shareError"
+            class="error"
+            role="alert"
+          >
+            {{ shareError }}
+          </p>
+          <p
+            v-if="members.length === 0"
+            class="hint"
+          >
+            Cette application n'est partagée avec personne.
+          </p>
+          <ul
+            v-else
+            class="members"
+          >
+            <li
+              v-for="member in members"
+              :key="member.userId"
+            >
+              <span class="member-email">{{ member.email }}</span>
+              <span class="badge">{{ ROLE_LABELS[member.role] }}</span>
+              <button
+                type="button"
+                class="danger small"
+                @click="unshare(member)"
+              >
+                Retirer
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <section
+          v-if="shared"
+          class="card"
+        >
+          <h2>Accès partagé</h2>
+          <p class="hint">
+            {{ app.owner ? app.owner + ' partage' : 'Son propriétaire partage' }} cette application avec vous ({{ roleLabel }}).
+          </p>
+          <button
+            type="button"
+            class="secondary"
+            @click="leave"
+          >
+            Quitter cette application
+          </button>
+        </section>
+
+        <section
+          v-if="isOwner"
+          class="card danger-zone"
+        >
           <h2>Zone de danger</h2>
           <p class="hint">
             Supprime l'application, ses pages et toutes leurs vues. C'est définitif.
@@ -263,6 +372,7 @@ import { lastHour, periodMs } from '@/period'
 import { isFull, quotaError } from '@/quota'
 import { csvFileName, pageNamesFromCsv, pagesToCsv } from '@/pagesCsv'
 import StatsPage from '@/components/Stats.vue'
+import { can, isShared, ROLE_LABELS, roleOf, shareError } from '@/roles'
 
 export default {
   name: 'AppDetail',
@@ -272,10 +382,15 @@ export default {
   },
   emits: ['authenticated'],
   data () {
-    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '', maxPages: 0, purge: lastHour(), purging: false, purgeResult: '' }
+    return { app: null, pages: [], notFound: false, newPage: '', error: '', importing: false, importResult: '', maxPages: 0, purge: lastHour(), purging: false, purgeResult: '', members: [], newMember: { email: '', role: 'read' }, sharing: false, shareError: '' }
   },
   computed: {
     full () { return isFull(this.pages.length, this.maxPages) },
+    canManage () { return can(this.app, 'manage') },
+    isOwner () { return can(this.app, 'owner') },
+    shared () { return isShared(this.app) },
+    roleLabel () { return ROLE_LABELS[roleOf(this.app)] },
+    ROLE_LABELS: () => ROLE_LABELS,
     tabs () {
       return [{ key: 'stats', label: 'Statistiques' }, { key: 'config', label: 'Configuration' }]
     },
@@ -290,7 +405,7 @@ export default {
   watch: {
     // The same component is reused when going from one application to another
     id () {
-      Object.assign(this, { app: null, pages: [], notFound: false, newPage: '', error: '', importResult: '', purgeResult: '' })
+      Object.assign(this, { app: null, pages: [], notFound: false, newPage: '', error: '', importResult: '', purgeResult: '', members: [], shareError: '' })
       this.load()
     }
   },
@@ -308,8 +423,64 @@ export default {
     load () {
       if (!this.maxPages) api.get('account').then(account => { this.maxPages = account.quotas.maxPagesPerApp }).catch(() => {})
       return api.get(`apps/${encodeURIComponent(this.id)}`)
-        .then(json => { this.app = json.app; this.pages = json.pages; this.notFound = false })
+        .then(json => {
+          this.app = json.app
+          this.pages = json.pages
+          this.notFound = false
+          // GET /apps/{id} has no owner email: GET /apps does, for the shared ones
+          if (this.shared) this.loadOwner()
+          if (this.isOwner) return this.loadMembers()
+        })
         .catch(this.handleError)
+    },
+    loadOwner () {
+      return api.get('apps')
+        .then(json => {
+          const found = json.apps.find(app => app.id === this.id)
+          if (found && this.app) this.app = { ...this.app, owner: found.owner }
+        })
+        .catch(() => {})
+    },
+    loadMembers () {
+      return api.get(`apps/${encodeURIComponent(this.id)}/members`)
+        .then(json => { this.members = json.members })
+        .catch(this.handleError)
+    },
+    async share () {
+      const email = this.newMember.email.trim()
+      if (!email) return
+      this.shareError = ''
+      this.sharing = true
+      try {
+        const json = await api.postJson(`apps/${encodeURIComponent(this.id)}/members`, { email, role: this.newMember.role })
+        this.members = json.members
+        this.newMember = { email: '', role: 'read' }
+      } catch (error) {
+        const message = shareError(error)
+        if (message) this.shareError = message
+        else this.handleError(error)
+      } finally {
+        this.sharing = false
+      }
+    },
+    async unshare (member) {
+      if (!confirm(`Retirer l'accès de ${member.email} à « ${this.app.name} » ?`)) return
+      this.shareError = ''
+      try {
+        await api.delete(`apps/${encodeURIComponent(this.id)}/members/${member.userId}`)
+      } catch (error) {
+        if (error.status !== 404) return this.handleError(error)
+      }
+      await this.loadMembers()
+    },
+    async leave () {
+      if (!confirm(`Quitter « ${this.app.name} » ? Vous n'y aurez plus accès.`)) return
+      try {
+        await api.delete(`apps/${encodeURIComponent(this.id)}/members/me`)
+        this.$router.push({ name: 'apps' })
+      } catch (error) {
+        this.handleError(error)
+      }
     },
     async addPage () {
       const name = this.newPage.trim()
@@ -435,6 +606,11 @@ export default {
 .pages th code { text-transform: none; letter-spacing: 0; }
 .page-name { font-weight: 600; }
 .actions { text-align: right; }
+.badge { display: inline-block; vertical-align: middle; font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); }
+.members { list-style: none; padding: 0; margin: 0; }
+.members li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.members li:last-child { border-bottom: 0; }
+.member-email { flex: 1; overflow-wrap: anywhere; }
 .danger-zone { border-color: var(--danger-soft); }
 .period { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
 .period label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--muted); }
