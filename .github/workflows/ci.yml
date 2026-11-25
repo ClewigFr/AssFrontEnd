@@ -5,6 +5,10 @@ on:
     branches: [master]
   pull_request:
 
+# Read-only token by default; the image job asks for packages: write itself
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
