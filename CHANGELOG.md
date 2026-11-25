@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Eco-design
+- The activity chart is plain SVG (`ActivityChart.vue`) instead of ApexCharts: the stats page loads 10 kB of JavaScript instead of 290 kB (gzipped), and follows the light or dark theme through CSS.
+- Periods already loaded are reused while the stats page is open (the current one for a minute).
+- Text files are gzipped at build time and served as is (`gzip_static`); missing files get a 404 instead of the app's HTML; a print stylesheet; a meta description and a `robots.txt`.
+- The home page is in the main bundle, and the session is checked once at startup instead of twice.
+- Removed the unused `src/assets/logo.png`.
+
 ### Added
 - The presentation page shows the latest version of each library (Android, iOS) in its snippets, from the backend's `GET /versions`, with built-in versions as a fallback.
 - Shared applications appear in « Mes applications » with a « Partagée · Lecture/Gestion » badge, and don't count in the account's application quota.

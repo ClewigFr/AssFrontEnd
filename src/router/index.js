@@ -1,5 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Login from '@/components/Login.vue'
+// The landing page, in the main bundle: loading it on demand added a round trip before its API calls
+import HomePage from '@/components/HomePage.vue'
 
 // Hash history keeps URLs like /#/apps working on a plain static file server
 // Pages reachable without being logged in
@@ -9,7 +11,7 @@ export default createRouter({
   history: createWebHashHistory(),
   routes: [
     // The public presentation of the service
-    { path: '/', name: 'home', component: () => import('@/components/HomePage.vue') },
+    { path: '/', name: 'home', component: HomePage },
     { path: '/login', name: 'login', component: Login },
     { path: '/legal', name: 'legal', component: () => import('@/components/LegalPage.vue'), props: { page: 'legal' } },
     { path: '/privacy', name: 'privacy', component: () => import('@/components/LegalPage.vue'), props: { page: 'privacy' } },
@@ -21,7 +23,7 @@ export default createRouter({
     // Opened from the reset email: /#/reset?token=…
     { path: '/reset', name: 'reset', component: () => import('@/components/ResetPassword.vue') },
     { path: '/apps', name: 'apps', component: () => import('@/components/AppsPage.vue') },
-    // Loaded on demand: keeps ApexCharts out of the login page's bundle
+    // Loaded on demand, with the stats page
     { path: '/apps/:id', name: 'app', component: () => import('@/components/AppDetail.vue'), props: true },
     { path: '/account', name: 'account', component: () => import('@/components/AccountPage.vue') },
     // Old dashboard URL

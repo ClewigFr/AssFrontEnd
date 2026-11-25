@@ -112,9 +112,9 @@
           CSV
         </button>
       </div>
-      <div
-        ref="chart"
-        class="chart"
+      <ActivityChart
+        v-if="series"
+        :data="series"
       />
     </section>
 
@@ -198,15 +198,18 @@
 </template>
 
 <script>
-import ApexCharts from 'apexcharts'
+import ActivityChart from '@/components/ActivityChart.vue'
 import { api } from '@/api'
 import { toCsv } from '@/pagesCsv'
 import {
   PERIODS, bucketSeries, detailCoverage, pagesCsvRows, slotsCsvRows, detailNote, formatNumber, formatPercent, formatRange, kpis, pageRows, timeZoneOffsetMinutes
 } from '@/stats'
 
+const CURRENT_PERIOD_CACHE_MS = 60_000
+
 export default {
   name: 'StatsPage',
+  components: { ActivityChart },
   props: {
     appId: { type: String, required: true }
   },
@@ -221,6 +224,9 @@ export default {
     return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, page, stats: null, filter: '', error: '' }
   },
   computed: {
+    series () {
+      return this.stats ? bucketSeries(this.stats) : null
+    },
     cards () {
       return this.stats ? kpis(this.stats) : []
     },
@@ -240,16 +246,12 @@ export default {
       return this.stats ? formatRange(this.stats.from, this.stats.to, this.stats.period) : ''
     }
   },
+  created () {
+    // Not reactive: responses already loaded, by request URL
+    this.cache = new Map()
+  },
   mounted () {
     this.load()
-    // Redraw with the other palette when the system switches between light and dark
-    this.colorScheme = window.matchMedia?.('(prefers-color-scheme: dark)')
-    this.onSchemeChange = () => { if (this.stats) this.drawChart() }
-    this.colorScheme?.addEventListener?.('change', this.onSchemeChange)
-  },
-  beforeUnmount () {
-    this.colorScheme?.removeEventListener?.('change', this.onSchemeChange)
-    if (this.chart) this.chart.destroy()
   },
   methods: {
     formatNumber,
@@ -293,14 +295,23 @@ export default {
     },
     // Called on mount and on period changes
     load () {
-      const query = `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}${this.page ? `&page=${this.page}` : ''}`
-      const requested = query
-      return api.get(`apps/${encodeURIComponent(this.appId)}/stats?${query}`)
+      const query = this.query()
+      const url = `apps/${encodeURIComponent(this.appId)}/stats?${query}`
+      // Going back and forth between periods reuses what was loaded: past periods while this
+      // page is open (it's remounted after the configuration tab, so page changes show), the
+      // current one for a minute since views keep coming
+      const cached = this.cache.get(url)
+      if (cached && (this.offset < 0 || Date.now() - cached.at < CURRENT_PERIOD_CACHE_MS)) {
+        this.error = ''
+        this.stats = cached.json
+        return Promise.resolve()
+      }
+      return api.get(url)
         .then(json => {
-          if (requested !== `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}${this.page ? `&page=${this.page}` : ''}`) return // a newer request is on its way
+          if (query !== this.query()) return // a newer request is on its way
+          this.cache.set(url, { json, at: Date.now() })
           this.error = ''
           this.stats = json
-          this.drawChart()
         })
         .catch(error => {
           if (error.status === 401) this.$emit('authenticated', false)
@@ -311,44 +322,8 @@ export default {
           }
         })
     },
-    drawChart () {
-      const series = bucketSeries(this.stats)
-      // Colours from the design tokens, so the chart follows the light or dark theme
-      const css = getComputedStyle(this.$refs.chart)
-      const color = name => css.getPropertyValue(name).trim()
-      const options = {
-        chart: {
-          type: 'area',
-          height: 300,
-          toolbar: { show: false },
-          animations: { enabled: false },
-          background: 'transparent',
-          foreColor: color('--muted'),
-          fontFamily: 'inherit'
-        },
-        theme: { mode: this.colorScheme?.matches ? 'dark' : 'light' },
-        colors: [color('--primary'), color('--accent'), color('--muted')],
-        // The previous period: a dashed line, no area
-        fill: { type: ['gradient', 'gradient', 'solid'], opacity: [1, 1, 0], gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
-        grid: { borderColor: color('--border'), strokeDashArray: 3 },
-        tooltip: { theme: this.colorScheme?.matches ? 'dark' : 'light' },
-        dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: [2, 2, 1.5], dashArray: [0, 0, 5] },
-        series: [
-          { name: 'Pages vues', data: series.views },
-          { name: 'Sessions', data: series.sessions },
-          { name: 'Vues, période précédente', data: series.previousViews }
-        ],
-        xaxis: { categories: series.categories, tickAmount: Math.min(series.categories.length, 12) },
-        yaxis: { min: 0, forceNiceScale: true, labels: { formatter: v => formatNumber(v) } },
-        legend: { position: 'top' }
-      }
-      if (this.chart) {
-        this.chart.updateOptions(options)
-      } else {
-        this.chart = new ApexCharts(this.$refs.chart, options)
-        this.chart.render()
-      }
+    query () {
+      return `period=${this.period}&offset=${this.offset}&tz=${timeZoneOffsetMinutes()}${this.page ? `&page=${this.page}` : ''}`
     }
   }
 }

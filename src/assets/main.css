@@ -195,3 +195,28 @@ tbody tr:last-child td { border-bottom: 0; }
 
 /* Sign-up honeypot: off screen rather than display:none, which some bots skip */
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+/* Print: black on white whatever the system theme, no navigation or controls,
+   no backgrounds or shadows (saves ink), cards and tables kept whole on a page. */
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #fff; --surface: #fff; --surface-2: #fff;
+    --border: #bbb; --border-strong: #888;
+    --text: #000; --muted: #333;
+    --primary: #000; --accent: #555;
+    --shadow: none;
+  }
+  @page { margin: 15mm; }
+  body { font-size: 11pt; background: #fff; color: #000; }
+  .topbar, .app-footer, button, input, select, textarea, form,
+  .segmented, .inline-form, .danger-zone, .honeypot { display: none !important; }
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+  .card, .banner { border: 1px solid #bbb; padding: 10px 0; break-inside: avoid; }
+  .card { border-width: 0 0 1px; border-radius: 0; }
+  h1, h2 { break-after: avoid; }
+  tr, img, svg { break-inside: avoid; }
+  thead { display: table-header-group; }
+  .table-wrap { overflow: visible; }
+  a { color: #000; text-decoration: none; }
+}

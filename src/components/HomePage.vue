@@ -235,9 +235,10 @@ import { legal } from '@/legal'
 export default {
   name: 'HomePage',
   components: { AssLogo },
+  // From App's session check (false when mounted alone, as in the tests)
+  inject: { logged: { default: false } },
   data () {
     return {
-      logged: false,
       // Shown in the Gradle and Swift package snippets: the latest release of each library, from the
       // backend's GET /versions; these are only used until it answers, or if it doesn't know them
       versions: { android: '0.5.1', ios: '0.5.0' },
@@ -259,7 +260,6 @@ export default {
   },
   mounted () {
     // Only changes the buttons: the page itself is public
-    api.get('login').then(body => { this.logged = body === 'Logged' }).catch(() => {})
     api.get('limits').then(limits => { this.limits = limits }).catch(() => {})
     api.get('versions').then(latest => {
       for (const p of ['android', 'ios']) if (latest?.[p]) this.versions[p] = latest[p]

@@ -74,6 +74,7 @@
 </template>
 
 <script>
+import { computed } from 'vue'
 import AssLogo from '@/components/AssLogo.vue'
 import { api } from '@/api'
 import { legal } from '@/legal'
@@ -83,6 +84,10 @@ import { PUBLIC_ROUTES } from '@/router'
 export default {
   name: 'App',
   components: { AssLogo },
+  // The startup session check, shared with the pages (the home page's buttons) so it's made once
+  provide () {
+    return { logged: computed(() => this.authenticated) }
+  },
   data () {
     return {
       authenticated: false,
