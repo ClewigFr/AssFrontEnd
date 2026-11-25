@@ -1,6 +1,6 @@
 # Anonymous Simple Stats front end
 
-The dashboard for Anonymous Simple Stats: Vue 3, built with Vite and charted with ApexCharts.
+The dashboard for Anonymous Simple Stats: Vue 3, built with Vite, with no other runtime dependency than vue-router (the chart is plain SVG).
 
 ## Running in dev
 
@@ -78,8 +78,9 @@ The CSP also allows scripts and frames from `https://challenges.cloudflare.com`,
 ## Project layout
 
 - `src/components/AssLogo.vue` and `public/favicon.svg`: the logo, two rounded bars on meadow green (`#5a9e2f`), the same in light and dark mode. The interface uses a darker green (`--primary`, `#3f7d20`) so white text on buttons stays readable.
-- `src/assets/main.css`: the design tokens (colours, radius, shadows) for light and dark mode, which follow the system setting, and the shared styles (buttons, fields, cards, tables, segmented controls, banners). Components only add their layout, using the tokens (`var(--primary)`…); the stats chart reads them too. Laid out for phones from 375 px wide.
+- `src/assets/main.css`: the design tokens (colours, radius, shadows) for light and dark mode, which follow the system setting, and the shared styles (buttons, fields, cards, tables, segmented controls, banners). Components only add their layout, using the tokens (`var(--primary)`…); the stats chart is coloured with them too. Laid out for phones from 375 px wide.
 - `src/api.js`: a small `fetch` wrapper for the backend. It always sends the session cookie.
+- `src/components/ActivityChart.vue`: the activity chart, plain SVG (views, sessions, previous period dashed), with a hover tooltip and the figures in each slot's `<title>` for screen readers; its geometry is in `src/chartScale.js` (`test/chartScale.test.js`). It replaced ApexCharts (~290 kB gzipped).
 - `src/stats.js`: formatting and derived values for the stats (trends, durations, chart series, table rows), kept free of DOM code so they can be unit tested (`test/stats.test.js`).
 - `src/components/HomePage.vue`: the public presentation of the service at `/` (what the library does, its anonymity, how to integrate it, and the free limits and retention, read from the backend's `GET /limits`), with sign-up and login links, or a link to the dashboard when logged in. Keep its Gradle version in step with the library's latest tag.
 - `src/components/AppsPage.vue`: "Mes applications". Lists your applications and creates new ones; each shows its UUID, the value to pass to the Android library's `AssConfig(appId = …)`.
@@ -91,7 +92,7 @@ The CSP also allows scripts and frames from `https://challenges.cloudflare.com`,
 - "Supprimer des vues" in the Configuration tab deletes the views received during a period (the last hour by default, in the viewer's time zone), after a flood of fake views. `src/period.js` converts the inputs (`test/period.test.js`).
 - `src/pagesCsv.js`: CSV parsing and writing for the import and export (`test/pagesCsv.test.js`).
 - Stats: a click on a page shows its own stats (`?page=<id>`); the chart has the previous period as a dashed line; **CSV** buttons export the slots and the pages table (`slotsCsvRows`, `pagesCsvRows` in `src/stats.js`).
-- `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, so ApexCharts isn't downloaded on the login page. For periods older than the backend's retention (90 days by default), only views are kept: session figures show `—` or cover only the recent part, and a note explains it (`detailFrom` in the stats response).
+- `src/components/Stats.vue`: the stats of one application. It has a Jour / Semaine / Mois / Année selector with ◀ ▶ to move between periods, cards for views, sessions, pages per session, average duration and bounce rate (each with its change versus the previous period), an activity chart, and a pages table with each page's share of traffic. Loaded on demand, with the application page. Periods already loaded are reused while the page is open (the current one for a minute). For periods older than the backend's retention (90 days by default), only views are kept: session figures show `—` or cover only the recent part, and a note explains it (`detailFrom` in the stats response).
 - `vite.config.js`: the build and dev server settings, and where `BACKEND_URL` is read.
 
 ## Legal pages
