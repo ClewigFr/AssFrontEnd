@@ -253,7 +253,7 @@ describe('HomePage', () => {
     api.get.mockRejectedValue(httpError(401))
     const wrapper = mount(HomePage, { global: { stubs: ['router-link'] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('com.github.ClewigFr.AssAndroid:assLib:0.5.0')
+    expect(wrapper.text()).toContain('com.github.ClewigFr.AssAndroid:assLib:0.5.1')
     expect(wrapper.find('.ai a').attributes('href')).toContain('AssAndroid')
 
     const ios = wrapper.findAll('[role=tab]').find(tab => tab.text() === 'iOS')
@@ -263,5 +263,27 @@ describe('HomePage', () => {
     expect(wrapper.text()).toContain('.trackScreen(stats, "<UUID de la page>")')
     expect(wrapper.text()).not.toContain('assLib')
     expect(wrapper.find('.ai a').attributes('href')).toBe('https://github.com/ClewigFr/AssIOS/blob/master/AI_INTEGRATION.md')
+  })
+
+  it('shows the latest version of each library from the backend', async () => {
+    api.get.mockImplementation(path => path === 'versions'
+      ? Promise.resolve({ android: '0.6.0', ios: '0.5.2' })
+      : Promise.reject(httpError(401)))
+    const wrapper = mount(HomePage, { global: { stubs: ['router-link'] } })
+    await flushPromises()
+    expect(api.get).toHaveBeenCalledWith('versions')
+    expect(wrapper.text()).toContain('com.github.ClewigFr.AssAndroid:assLib:0.6.0')
+
+    await wrapper.findAll('[role=tab]').find(tab => tab.text() === 'iOS').trigger('click')
+    expect(wrapper.text()).toContain('à partir de 0.5.2')
+  })
+
+  it('keeps the built-in version of a library the backend doesn\'t know', async () => {
+    api.get.mockImplementation(path => path === 'versions'
+      ? Promise.resolve({ ios: '0.5.2' })
+      : Promise.reject(httpError(401)))
+    const wrapper = mount(HomePage, { global: { stubs: ['router-link'] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('com.github.ClewigFr.AssAndroid:assLib:0.5.1')
   })
 })

@@ -18,6 +18,7 @@ const backendEnv = {
   EMAIL_VERIFICATION: 'false',
   SIGNUP_MIN_SECONDS: '0',
   MAX_APPS: '2',
+  VERSIONS_REFRESH: 'false',
   MAX_PAGES_PER_APP: '5',
   MAX_MONTHLY_VIEWS: '3'
 }

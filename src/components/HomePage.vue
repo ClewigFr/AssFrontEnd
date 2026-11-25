@@ -236,11 +236,11 @@ export default {
   name: 'HomePage',
   components: { AssLogo },
   data () {
-    // Shown in the Gradle and Swift package snippets; the Android and iOS libraries share their
-    // version numbers: keep in step with their latest tag
     return {
       logged: false,
-      version: '0.5.0',
+      // Shown in the Gradle and Swift package snippets: the latest release of each library, from the
+      // backend's GET /versions; these are only used until it answers, or if it doesn't know them
+      versions: { android: '0.5.1', ios: '0.5.0' },
       limits: null,
       platform: 'android',
       platforms: [{ id: 'android', label: 'Android' }, { id: 'ios', label: 'iOS' }],
@@ -250,6 +250,9 @@ export default {
     }
   },
   computed: {
+    version () {
+      return this.versions[this.platform]
+    },
     repo () {
       return this.platform === 'ios' ? 'https://github.com/ClewigFr/AssIOS' : 'https://github.com/ClewigFr/AssAndroid'
     }
@@ -258,6 +261,9 @@ export default {
     // Only changes the buttons: the page itself is public
     api.get('login').then(body => { this.logged = body === 'Logged' }).catch(() => {})
     api.get('limits').then(limits => { this.limits = limits }).catch(() => {})
+    api.get('versions').then(latest => {
+      for (const p of ['android', 'ios']) if (latest?.[p]) this.versions[p] = latest[p]
+    }).catch(() => {})
   },
   methods: {
     // 0 means no limit
