@@ -3,8 +3,10 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 // Backend base URL, read at build/dev time: BACKEND_URL=https://api.example.com npm run build
-const backendUrl = process.env.BACKEND_URL ||
-  (process.env.NODE_ENV === 'production' ? 'https://ass-api.clewig.fr' : 'http://localhost:8099')
+// Required for a production build, so a dashboard never calls someone else's API by mistake.
+const isBuild = process.argv.includes('build')
+const backendUrl = process.env.BACKEND_URL || (isBuild ? null : 'http://localhost:8099')
+if (!backendUrl) throw new Error('Set BACKEND_URL for a production build, e.g. BACKEND_URL=https://api.example.com npm run build')
 
 export default defineConfig({
   plugins: [vue()],

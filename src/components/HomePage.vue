@@ -102,7 +102,7 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
     override fun onCreate() {
         super.onCreate()
         AnonymousSimpleStatsManager.getInstance(this, AssConfig(
-            endpoint = "https://ass-api.clewig.fr",
+            endpoint = "{{ endpoint }}",
             appId = "&lt;UUID de l'application&gt;"
         ))
     }
@@ -174,7 +174,7 @@ implementation 'com.github.ClewigFr.AssAndroid:assLib:{{ version }}'</code></pre
 
 <script>
 import AssLogo from '@/components/AssLogo.vue'
-import { api } from '@/api'
+import { api, BACKEND_URL } from '@/api'
 import { formatCount } from '@/quota'
 import { legal } from '@/legal'
 
@@ -183,7 +183,7 @@ export default {
   components: { AssLogo },
   data () {
     // Shown in the Gradle snippet; keep in step with the library's latest tag
-    return { logged: false, version: '0.5.0', limits: null, legal }
+    return { logged: false, version: '0.5.0', limits: null, legal, endpoint: BACKEND_URL }
   },
   mounted () {
     // Only changes the buttons: the page itself is public

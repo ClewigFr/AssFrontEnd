@@ -33,7 +33,7 @@ Things to know:
 The dashboard calls the AssBackend API. Its base URL is fixed when the app is built or the dev server starts:
 
 - **Dev** (`npm run dev`): `http://localhost:8099` by default.
-- **Prod** (`npm run build`): set `BACKEND_URL=https://your-api.example.com`. If it's not set, `https://ass-api.clewig.fr` is used.
+- **Prod** (`npm run build`): set `BACKEND_URL=https://your-api.example.com`. It's required: the build fails without it.
 
 The backend must list this dashboard's origin in its `CORS_ORIGINS` setting, or the browser blocks every request.
 
@@ -70,7 +70,7 @@ The CI runs them on every push, against the latest backend image. The dashboard 
 The dashboard is a Docker image (nginx serving `dist/`), built and published to GitHub Packages by the CI on every push to master, for arm64 and amd64. `nginx.conf` sets the cache and security headers, including a Content-Security-Policy that only allows calls to the `BACKEND_URL` the image was built with:
 
 ```bash
-docker build --build-arg BACKEND_URL=https://ass-api.clewig.fr -t ass-dashboard .
+docker build --build-arg BACKEND_URL=https://ass-api.example.com -t ass-dashboard .
 ```
 
 The CSP also allows scripts and frames from `https://challenges.cloudflare.com`, for the Cloudflare Turnstile widget of the sign-up page (`src/turnstile.js`). The widget is only loaded when the backend sends a site key (`GET /register/form`, set with `TURNSTILE_SITE_KEY` on the backend); nothing in the dashboard needs configuring.
@@ -113,3 +113,9 @@ In an application's **Configuration** tab:
 
 - **Importer un CSV** creates the pages listed in a file: one page name per line, in the first column. Other columns are ignored, and so is a header row (`name`, `nom`, `page`…). Separators `,`, `;` or tab, quotes and UTF-8 with or without BOM are accepted, so a column exported from Excel or Google Sheets works. Names that already exist aren't created twice, so the same file can be imported again after adding lines. Up to 1000 pages per file, and the application can't go over its pages quota (30 by default): a file that would is refused before anything is created.
 - **Exporter en CSV** downloads `name,id,app_id`, one line per page: everything needed to call `logScreen` for each screen. Give it to a developer or an AI assistant along with the library's README to add the tracking calls to an app.
+
+## Contributing and license
+
+Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues privately, see [SECURITY.md](SECURITY.md).
+
+Released under the [MIT license](LICENSE). The project is part of Anonymous Simple Stats, with the [Android library](https://github.com/ClewigFr/AssAndroid) and the [API](https://github.com/ClewigFr/AssBackend).
