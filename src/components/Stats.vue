@@ -121,6 +121,22 @@
     <section class="card">
       <div class="section-head">
         <h2>Pages</h2>
+        <div
+          class="segmented"
+          role="group"
+          aria-label="Affichage des pages"
+        >
+          <button
+            v-for="v in pageViews"
+            :key="v.key"
+            type="button"
+            :aria-pressed="v.key === pagesView"
+            :class="{ active: v.key === pagesView }"
+            @click="setPagesView(v.key)"
+          >
+            {{ v.label }}
+          </button>
+        </div>
         <button
           type="button"
           class="secondary small"
@@ -131,6 +147,7 @@
           CSV
         </button>
         <input
+          v-if="!showPie"
           v-model="filter"
           type="search"
           class="filter"
@@ -138,8 +155,14 @@
           placeholder="Filtrer"
         >
       </div>
+      <PagesPie
+        v-if="stats && showPie"
+        :pages="stats.pages"
+        :selected="page"
+        @select="selectPage"
+      />
       <div
-        v-if="rows.length"
+        v-if="!showPie && rows.length"
         class="table-wrap"
       >
         <table class="pages-table">
@@ -188,7 +211,7 @@
         </table>
       </div>
       <p
-        v-else-if="stats"
+        v-else-if="stats && !showPie"
         class="hint"
       >
         Aucune page ne correspond.
@@ -199,6 +222,7 @@
 
 <script>
 import ActivityChart from '@/components/ActivityChart.vue'
+import PagesPie from '@/components/PagesPie.vue'
 import { api } from '@/api'
 import { toCsv } from '@/pagesCsv'
 import {
@@ -207,9 +231,16 @@ import {
 
 const CURRENT_PERIOD_CACHE_MS = 60_000
 
+const PAGE_VIEWS = [{ key: 'table', label: 'Tableau' }, { key: 'pie', label: 'Camembert' }]
+// The viewer's choice, kept in this browser only
+const PAGES_VIEW_KEY = 'ass.pagesView'
+function savedPagesView () {
+  try { return localStorage.getItem(PAGES_VIEW_KEY) === 'pie' ? 'pie' : 'table' } catch { return 'table' }
+}
+
 export default {
   name: 'StatsPage',
-  components: { ActivityChart },
+  components: { ActivityChart, PagesPie },
   props: {
     appId: { type: String, required: true }
   },
@@ -221,7 +252,7 @@ export default {
     const offset = Number.parseInt(query.offset, 10)
     // ?page=<id>: the stats of one page
     const page = typeof query.page === 'string' && /^[0-9a-f-]{36}$/.test(query.page) ? query.page : null
-    return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, page, stats: null, filter: '', error: '' }
+    return { periods: PERIODS, period, offset: offset < 0 ? offset : 0, page, stats: null, filter: '', error: '', pageViews: PAGE_VIEWS, pagesView: savedPagesView() }
   },
   computed: {
     series () {
@@ -242,6 +273,10 @@ export default {
     pageName () {
       return this.stats?.pages.find(p => p.id === this.page)?.name || ''
     },
+    // A single page selected: one full circle says nothing, the table is shown
+    showPie () {
+      return this.pagesView === 'pie' && !this.page
+    },
     rangeLabel () {
       return this.stats ? formatRange(this.stats.from, this.stats.to, this.stats.period) : ''
     }
@@ -256,6 +291,10 @@ export default {
   methods: {
     formatNumber,
     formatPercent,
+    setPagesView (view) {
+      this.pagesView = view
+      try { localStorage.setItem(PAGES_VIEW_KEY, view) } catch { /* storage blocked: the choice lasts until reload */ }
+    },
     setPeriod (period) {
       this.period = period
       this.offset = 0
@@ -341,7 +380,7 @@ export default {
 .kpi-delta.good { color: var(--success); }
 .kpi-delta.bad { color: var(--danger); }
 .retention { margin: -4px 0 16px; }
-.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .section-head h2 { margin: 0; }
 .filter { max-width: 220px; }
 .section-head h2 { margin-right: auto; }

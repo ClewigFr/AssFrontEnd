@@ -10,6 +10,7 @@
 - Removed the unused `src/assets/logo.png`.
 
 ### Added
+- Pages section of the stats: a « Tableau / Camembert » switch, remembered in the browser. The donut shows each page's share of the views (the 6 busiest, the rest in « Autres »), with a legend; hovering a slice shows its figures, clicking it opens the page's stats.
 - « Parcours » tab on an application: most frequent screen-to-screen transitions (sessions, mean time before), entry and exit screens, per period, from the backend's `GET /apps/{app}/flows`. Rare transitions are only counted, never one person's path.
 - The presentation page shows the latest version of each library (Android, iOS) in its snippets, from the backend's `GET /versions`, with built-in versions as a fallback.
 - Shared applications appear in « Mes applications » with a « Partagée · Lecture/Gestion » badge, and don't count in the account's application quota.
