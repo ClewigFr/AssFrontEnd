@@ -72,6 +72,19 @@
       </div>
 
       <div
+        v-else-if="tab === 'flows'"
+        id="panel-flows"
+        role="tabpanel"
+        aria-labelledby="tab-flows"
+      >
+        <FlowsPage
+          :app-id="app.id"
+          :pages="pages"
+          @authenticated="$emit('authenticated', $event)"
+        />
+      </div>
+
+      <div
         v-else
         id="panel-config"
         role="tabpanel"
@@ -371,12 +384,13 @@ import CopyId from '@/components/CopyId.vue'
 import { lastHour, periodMs } from '@/period'
 import { isFull, quotaError } from '@/quota'
 import { csvFileName, pageNamesFromCsv, pagesToCsv } from '@/pagesCsv'
+import FlowsPage from '@/components/Flows.vue'
 import StatsPage from '@/components/Stats.vue'
 import { can, isShared, ROLE_LABELS, roleOf, shareError } from '@/roles'
 
 export default {
   name: 'AppDetail',
-  components: { CopyId, StatsPage },
+  components: { CopyId, FlowsPage, StatsPage },
   props: {
     id: { type: String, required: true }
   },
@@ -392,13 +406,13 @@ export default {
     roleLabel () { return ROLE_LABELS[roleOf(this.app)] },
     ROLE_LABELS: () => ROLE_LABELS,
     tabs () {
-      return [{ key: 'stats', label: 'Statistiques' }, { key: 'config', label: 'Configuration' }]
+      return [{ key: 'stats', label: 'Statistiques' }, { key: 'flows', label: 'Parcours' }, { key: 'config', label: 'Configuration' }]
     },
     // In the URL (?tab=config) so a reload or a shared link opens the same tab.
     // Without it: stats, or the configuration while the application has no page yet.
     tab () {
       const tab = this.$route.query.tab
-      if (tab === 'stats' || tab === 'config') return tab
+      if (tab === 'stats' || tab === 'flows' || tab === 'config') return tab
       return this.app && this.pages.length === 0 ? 'config' : 'stats'
     }
   },
