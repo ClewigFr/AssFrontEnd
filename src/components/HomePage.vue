@@ -7,7 +7,7 @@
       </span>
       <nav>
         <a
-          href="https://github.com/ClewigFr/AssAndroid"
+          href="https://github.com/ClewigFr"
           target="_blank"
           rel="noopener"
           class="nav-github"
@@ -381,7 +381,7 @@ override func viewDidAppear(_ animated: Bool) {
           Créer un compte gratuit
         </router-link>
         <a
-          href="https://github.com/ClewigFr/AssAndroid"
+          href="https://github.com/ClewigFr"
           target="_blank"
           rel="noopener"
           class="secondary-link"
@@ -401,7 +401,17 @@ override func viewDidAppear(_ animated: Bool) {
           href="https://github.com/ClewigFr/AssIOS"
           target="_blank"
           rel="noopener"
-        >iOS</a>
+        >iOS</a>,
+        <a
+          href="https://github.com/ClewigFr/AssBackend"
+          target="_blank"
+          rel="noopener"
+        >API</a>,
+        <a
+          href="https://github.com/ClewigFr/AssFrontEnd"
+          target="_blank"
+          rel="noopener"
+        >dashboard</a>
       </span>
       <span class="footer-links">
         <router-link

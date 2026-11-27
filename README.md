@@ -119,4 +119,4 @@ In an application's **Configuration** tab:
 
 Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues privately, see [SECURITY.md](SECURITY.md).
 
-Released under the [MIT license](LICENSE). The project is part of Anonymous Simple Stats, with the [Android library](https://github.com/ClewigFr/AssAndroid) and the [API](https://github.com/ClewigFr/AssBackend).
+Released under the [MIT license](LICENSE). The project is part of Anonymous Simple Stats, with the [Android](https://github.com/ClewigFr/AssAndroid) and [iOS](https://github.com/ClewigFr/AssIOS) libraries and the [API](https://github.com/ClewigFr/AssBackend).
