@@ -6,6 +6,12 @@
         Anonymous Simple Stats
       </span>
       <nav>
+        <a
+          href="https://github.com/ClewigFr/AssAndroid"
+          target="_blank"
+          rel="noopener"
+          class="nav-github"
+        >GitHub</a>
         <router-link
           v-if="logged"
           :to="{ name: 'apps' }"
@@ -45,6 +51,77 @@
           class="secondary-link"
           @click.prevent="scrollTo('integration')"
         >Voir l'intégration</a>
+      </div>
+      <ul
+        class="badges"
+        aria-label="En bref"
+      >
+        <li>Aucun identifiant d'appareil</li>
+        <li>Aucune dépendance</li>
+        <li>Open source, licence MIT</li>
+        <li>Quelques lignes à intégrer</li>
+      </ul>
+    </section>
+
+    <!-- Screenshots of the real dashboard, filled by a demo app with generated views (never real data) -->
+    <section
+      class="showcase"
+      aria-labelledby="showcase-title"
+    >
+      <h2 id="showcase-title">
+        Le dashboard que vous aurez
+      </h2>
+      <p class="hint showcase-hint">
+        Captures du vrai dashboard, avec une application de démonstration et des vues générées.
+      </p>
+      <figure class="shot main-shot">
+        <picture>
+          <source
+            srcset="/screenshots/overview-dark.png"
+            media="(prefers-color-scheme: dark)"
+          >
+          <img
+            src="/screenshots/overview-light.png"
+            width="1904"
+            height="1074"
+            alt="Vue d'ensemble : pages vues, sessions, pages par session, durée moyenne et taux de rebond sur un mois, avec la courbe d'activité jour par jour comparée à la période précédente."
+          >
+        </picture>
+        <figcaption>Vues, sessions, durée moyenne et rebond, par jour, semaine, mois ou année, comparés à la période précédente.</figcaption>
+      </figure>
+      <div class="shot-grid">
+        <figure class="shot">
+          <picture>
+            <source
+              srcset="/screenshots/pages-dark.png"
+              media="(prefers-color-scheme: dark)"
+            >
+            <img
+              src="/screenshots/pages-light.png"
+              width="1856"
+              height="606"
+              loading="lazy"
+              alt="Répartition des vues par page en camembert : Accueil 35 %, Recette 32 %, Recherche 11 %…"
+            >
+          </picture>
+          <figcaption>Les écrans les plus vus, en tableau ou en camembert, exportables en CSV.</figcaption>
+        </figure>
+        <figure class="shot">
+          <picture>
+            <source
+              srcset="/screenshots/flows-dark.png"
+              media="(prefers-color-scheme: dark)"
+            >
+            <img
+              src="/screenshots/flows-light.png"
+              width="1856"
+              height="860"
+              loading="lazy"
+              alt="Parcours : les enchaînements d'écrans les plus fréquents, avec le nombre de sessions et le temps moyen passé avant de changer d'écran."
+            >
+          </picture>
+          <figcaption>Les parcours : d'où viennent vos utilisateurs et où ils vont ensuite.</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -194,6 +271,28 @@ override func viewDidAppear(_ animated: Bool) {
       </p>
     </section>
 
+    <section
+      v-if="!logged"
+      class="final-cta"
+    >
+      <h2>Prêt à savoir quels écrans comptent ?</h2>
+      <p>Un compte gratuit, une application, quelques lignes de code : vos premières vues arrivent dans la minute.</p>
+      <div class="cta">
+        <router-link
+          :to="{ name: 'register' }"
+          class="button-link big"
+        >
+          Créer un compte gratuit
+        </router-link>
+        <a
+          href="https://github.com/ClewigFr/AssAndroid"
+          target="_blank"
+          rel="noopener"
+          class="secondary-link"
+        >Lire le code sur GitHub</a>
+      </div>
+    </section>
+
     <footer class="home-footer">
       <span>
         Code source (MIT) :
@@ -336,7 +435,30 @@ pre code { font-size: inherit; }
 .limit-grid strong { display: block; font-size: 1.6rem; color: var(--text); }
 .footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
 .home-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 0.9rem; padding: 24px 0 8px; }
+.badges { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.badges li { background: var(--primary-soft); color: var(--primary); border-radius: 999px; padding: 4px 12px; font-size: 0.9rem; font-weight: 600; }
+.badges li::before { content: "✓ "; }
+.showcase { margin-bottom: 32px; }
+.showcase h2 { text-align: center; font-size: 1.6rem; margin: 0 0 4px; }
+.showcase-hint { text-align: center; margin: 0 0 20px; }
+.shot { margin: 0; min-width: 0; }
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgb(16 24 40 / 12%), var(--shadow);
+  background: var(--bg);
+}
+.shot figcaption { color: var(--muted); font-size: 0.92rem; margin-top: 10px; text-align: center; }
+.main-shot { margin-bottom: 24px; }
+.shot-grid { display: grid; gap: 24px; }
+.final-cta { text-align: center; padding: 40px 16px; margin-top: 16px; border-radius: var(--radius); background: var(--primary-soft); }
+.final-cta h2 { margin: 0 0 8px; font-size: 1.5rem; }
+.final-cta p { margin: 0 auto 16px; max-width: 560px; color: var(--muted); }
 @media (max-width: 520px) {
+  .nav-github { display: none; }
   .home-nav { margin-bottom: 24px; }
   .steps li { padding-left: 0; padding-top: 38px; }
   .home-nav .brand { font-size: 0; gap: 0; }
