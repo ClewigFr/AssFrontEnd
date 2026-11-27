@@ -13,7 +13,7 @@ test('refuses a wrong password, then logs in and out', async ({ page }) => {
   await page.getByRole('link', { name: 'Se déconnecter' }).click()
   await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible()
   // The session is really over: the apps page sends back to login
-  await page.goto('/#/apps')
+  await page.goto('/apps')
   await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible()
 })
 

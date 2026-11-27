@@ -77,11 +77,11 @@
       <figure class="shot main-shot">
         <picture>
           <source
-            srcset="/screenshots/overview-dark.png"
+            srcset="/screenshots/overview-dark.webp"
             media="(prefers-color-scheme: dark)"
           >
           <img
-            src="/screenshots/overview-light.png"
+            src="/screenshots/overview-light.webp"
             width="1904"
             height="1074"
             alt="Vue d'ensemble : pages vues, sessions, pages par session, durée moyenne et taux de rebond sur un mois, avec la courbe d'activité jour par jour comparée à la période précédente."
@@ -93,11 +93,11 @@
         <figure class="shot">
           <picture>
             <source
-              srcset="/screenshots/pages-dark.png"
+              srcset="/screenshots/pages-dark.webp"
               media="(prefers-color-scheme: dark)"
             >
             <img
-              src="/screenshots/pages-light.png"
+              src="/screenshots/pages-light.webp"
               width="1856"
               height="606"
               loading="lazy"
@@ -109,11 +109,11 @@
         <figure class="shot">
           <picture>
             <source
-              srcset="/screenshots/flows-dark.png"
+              srcset="/screenshots/flows-dark.webp"
               media="(prefers-color-scheme: dark)"
             >
             <img
-              src="/screenshots/flows-light.png"
+              src="/screenshots/flows-light.webp"
               width="1856"
               height="860"
               loading="lazy"

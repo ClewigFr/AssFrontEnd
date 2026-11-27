@@ -5,12 +5,30 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#3f7d20">
-    <title>Anonymous Simple Stats</title>
+    <title>Analytics anonymes pour apps Android et iOS | Anonymous Simple Stats</title>
     <meta name="description" content="Statistiques d'écrans pour apps Android et iOS, anonymes par conception : écrans vus, durée des sessions et parcours, sans identifiant ni donnée personnelle.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Anonymous Simple Stats">
+    <meta property="og:site_name" content="Anonymous Simple Stats">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Analytics anonymes pour apps Android et iOS">
     <meta property="og:description" content="Statistiques d'écrans pour apps Android et iOS, anonymes par conception. Sans identifiant d'appareil, sans dépendance, open source.">
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- With SITE_URL set at build time, vite.config.js adds og:url, og:image and twitter:image here
+         (absolute URLs) and writes sitemap.xml; the router sets the canonical link of each page. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Anonymous Simple Stats",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Android, iOS",
+        "description": "Statistiques d'écrans pour apps Android et iOS, anonymes par conception : écrans vus, durée des sessions et parcours, sans identifiant ni donnée personnelle.",
+        "license": "https://opensource.org/licenses/MIT",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "codeRepository": "https://github.com/ClewigFr"
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

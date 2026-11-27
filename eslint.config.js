@@ -10,7 +10,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, ...globals.node, __BACKEND_URL__: 'readonly' }
+      globals: { ...globals.browser, ...globals.node, __BACKEND_URL__: 'readonly', __SITE_URL__: 'readonly' }
     }
   }
 ]

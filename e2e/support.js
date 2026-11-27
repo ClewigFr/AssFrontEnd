@@ -18,7 +18,7 @@ export async function newAccount (page) {
 }
 
 export async function login (page, email, password = PASSWORD) {
-  await page.goto('/#/login')
+  await page.goto('/login')
   await page.getByPlaceholder('Identifiant').fill(email)
   await page.getByPlaceholder('Mot de passe').fill(password)
   await page.getByRole('button', { name: 'Se connecter' }).click()

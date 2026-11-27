@@ -13,7 +13,7 @@ test('resets a forgotten password with the emailed link', async ({ page }) => {
   test.skip(!!process.env.E2E_BACKEND_URL, 'reads the email in the logs of the docker backend')
   const email = await newAccount(page)
 
-  await page.goto('/#/login')
+  await page.goto('/login')
   await page.getByRole('link', { name: 'Mot de passe oublié ?' }).click()
   await page.getByPlaceholder('Adresse email').fill(email)
   await page.getByRole('button', { name: 'Envoyer le lien' }).click()

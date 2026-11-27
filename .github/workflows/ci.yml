@@ -52,7 +52,7 @@ jobs:
           retention-days: 7
 
   # On master: publish the dashboard image (arm64 for the Raspberry Pi, and amd64) to GitHub Packages.
-  # The API address is baked in at build time: set the BACKEND_URL repository variable to change it.
+  # The API and site addresses are baked in at build time: set the BACKEND_URL and SITE_URL repository variables to change them.
   image:
     needs: [build, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -76,7 +76,9 @@ jobs:
           context: .
           platforms: linux/arm64,linux/amd64
           push: true
-          build-args: BACKEND_URL=${{ vars.BACKEND_URL || 'https://ass-api.clewig.fr' }}
+          build-args: |
+            BACKEND_URL=${{ vars.BACKEND_URL || 'https://ass-api.clewig.fr' }}
+            SITE_URL=${{ vars.SITE_URL || 'https://ass.clewig.fr' }}
           tags: |
             ${{ steps.name.outputs.image }}:latest
             ${{ steps.name.outputs.image }}:${{ github.sha }}

@@ -7,8 +7,10 @@ RUN npm ci --ignore-scripts
 COPY . .
 # The API address is fixed at build time (required)
 ARG BACKEND_URL
+# Optional public address of the dashboard: canonical links, link previews, sitemap.xml
+ARG SITE_URL
 RUN test -n "$BACKEND_URL" || (echo 'Set --build-arg BACKEND_URL=https://api.example.com' && exit 1)
-RUN BACKEND_URL=$BACKEND_URL npm run build
+RUN BACKEND_URL=$BACKEND_URL SITE_URL=$SITE_URL npm run build
 
 # Unprivileged image: nginx runs as user 101, not root. It still listens on 80
 # (Docker lets non-root processes bind low ports inside the container), so the
