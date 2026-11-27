@@ -154,6 +154,67 @@
     </section>
 
     <section
+      class="card compare"
+      aria-labelledby="compare-title"
+    >
+      <h2 id="compare-title">
+        Par rapport à une solution d'analytics classique
+      </h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" />
+              <th scope="col">
+                Anonymous Simple Stats
+              </th>
+              <th scope="col">
+                Analytics classique
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                Identifiant d'appareil ou de publicité
+              </th>
+              <td>Jamais</td>
+              <td>Souvent</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                Suivi d'un lancement à l'autre
+              </th>
+              <td>Impossible</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                Dépendances ajoutées à l'app
+              </th>
+              <td>Aucune</td>
+              <td>Un SDK et ses dépendances</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                Code source
+              </th>
+              <td>Ouvert (MIT), auto-hébergeable</td>
+              <td>Fermé le plus souvent</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                Ce que vous mesurez
+              </th>
+              <td>Les écrans, les sessions, les parcours</td>
+              <td>Bien plus, avec bien plus de données</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
       id="integration"
       class="card integration"
     >
@@ -269,6 +330,41 @@ override func viewDidAppear(_ animated: Bool) {
       >
         Au-delà de {{ count(limits.maxMonthlyViews) }} vues, le dashboard affiche une alerte, mais les vues continuent d'être comptées.
       </p>
+    </section>
+
+    <section
+      class="card faq"
+      aria-labelledby="faq-title"
+    >
+      <h2 id="faq-title">
+        Questions fréquentes
+      </h2>
+      <details>
+        <summary>Qu'est-ce qui est envoyé, exactement ?</summary>
+        <p>Pour chaque vue : l'identifiant de la page, un identifiant de session tiré au hasard au lancement de l'app, et le temps écoulé depuis la vue. Rien d'autre : ni modèle d'appareil, ni langue, ni position.</p>
+      </details>
+      <details>
+        <summary>Combien de temps prend l'intégration ?</summary>
+        <p>Quelques minutes : une dépendance, une initialisation, puis un appel par écran. Avec beaucoup d'écrans, le guide AI_INTEGRATION.md permet à un assistant IA d'ajouter tous les appels.</p>
+      </details>
+      <details>
+        <summary>Et si l'appareil est hors ligne ?</summary>
+        <p>Les vues sont gardées sur l'appareil et renvoyées plus tard, par lots, sans jamais être envoyées deux fois.</p>
+      </details>
+      <details>
+        <summary>Puis-je héberger le service moi-même ?</summary>
+        <p>
+          Oui : les librairies, l'API et ce dashboard sont open source, sous licence MIT. Le code est sur <a
+            href="https://github.com/ClewigFr"
+            target="_blank"
+            rel="noopener"
+          >GitHub</a>.
+        </p>
+      </details>
+      <details>
+        <summary>Que se passe-t-il si je dépasse les limites gratuites ?</summary>
+        <p>Le dashboard affiche une alerte, mais les vues continuent d'être comptées : rien n'est perdu.</p>
+      </details>
     </section>
 
     <section
@@ -457,8 +553,23 @@ pre code { font-size: inherit; }
 .final-cta { text-align: center; padding: 40px 16px; margin-top: 16px; border-radius: var(--radius); background: var(--primary-soft); }
 .final-cta h2 { margin: 0 0 8px; font-size: 1.5rem; }
 .final-cta p { margin: 0 auto 16px; max-width: 560px; color: var(--muted); }
+.compare, .faq { margin-top: 16px; min-width: 0; }
+.table-wrap { overflow-x: auto; }
+.compare table { width: 100%; border-collapse: collapse; }
+.compare th, .compare td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.compare tbody th { font-weight: 600; text-transform: none; letter-spacing: normal; font-size: inherit; color: var(--text); }
+.compare table { font-size: 0.95rem; }
+.compare thead th:nth-child(2), .compare td:nth-child(2) { color: var(--primary); font-weight: 600; }
+.compare td:nth-child(3) { color: var(--muted); }
+.faq details { border-bottom: 1px solid var(--border); padding: 12px 0; }
+.faq details:last-child { border-bottom: 0; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq details p { margin: 8px 0 0; color: var(--muted); }
 @media (max-width: 520px) {
   .nav-github { display: none; }
+  .compare table { font-size: 0.85rem; }
+  .compare th, .compare td { padding: 8px 6px; }
+  .compare thead th { font-size: 0.7rem; }
   .home-nav { margin-bottom: 24px; }
   .steps li { padding-left: 0; padding-top: 38px; }
   .home-nav .brand { font-size: 0; gap: 0; }
